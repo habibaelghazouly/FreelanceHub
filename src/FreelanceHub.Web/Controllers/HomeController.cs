@@ -1,8 +1,9 @@
-using FreelanceHub.Models;
+using FreelanceHub.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
-namespace FreelanceHub.Controllers
+namespace FreelanceHub.Web.Controllers
 {
 	public class HomeController : Controller
 	{
@@ -18,6 +19,8 @@ namespace FreelanceHub.Controllers
 			return View();
 		}
 
+
+		[Authorize(Roles = "Freelancer")]
 		public IActionResult Privacy()
 		{
 			return View();
