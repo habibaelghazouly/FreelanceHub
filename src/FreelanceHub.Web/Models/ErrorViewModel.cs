@@ -1,4 +1,4 @@
-namespace FreelanceHub.Models
+namespace FreelanceHub.Web.Models
 {
 	public class ErrorViewModel
 	{
