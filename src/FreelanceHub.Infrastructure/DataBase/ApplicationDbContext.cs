@@ -12,6 +12,12 @@ namespace FreelanceHub.Infrastructure.DataBase
 		{
 		}
 
+		public DbSet<Attachment> Attachments { get; set; }
+
+		public DbSet<ClientProfile> ClientProfiles { get; set; }
+
+		public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
+
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
