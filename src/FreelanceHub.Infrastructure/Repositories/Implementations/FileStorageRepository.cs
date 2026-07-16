@@ -1,4 +1,3 @@
-using FreelanceHub.Infrastructure.DTOs;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using FreelanceHub.Infrastructure.Storage;
 
@@ -13,7 +12,11 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 			_options = options;
 		}
 
-		public async Task<FileStorageResult> SaveAsync(FileStorageRequest file, string folderName, CancellationToken cancellationToken = default)
+		public async Task<(string StoredFileName, string FileUrl, string StorageKey)> SaveAsync(
+			Stream content,
+			string originalFileName,
+			string folderName,
+			CancellationToken cancellationToken = default)
 		{
 			if (string.IsNullOrWhiteSpace(_options.RootPath))
 			{
@@ -21,7 +24,7 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 			}
 
 			var safeFolderName = NormalizeFolderName(folderName);
-			var extension = Path.GetExtension(file.OriginalFileName).ToLowerInvariant();
+			var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
 			var storedFileName = $"{Guid.NewGuid():N}{extension}";
 			var publicBasePath = NormalizeFolderName(_options.PublicBasePath);
 			var storageFolder = string.IsNullOrWhiteSpace(publicBasePath)
@@ -33,25 +36,17 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 			Directory.CreateDirectory(physicalFolder);
 
 			var physicalPath = GetSafePhysicalPath(storageKey);
-			if (file.Content.CanSeek)
+			if (content.CanSeek)
 			{
-				file.Content.Position = 0;
+				content.Position = 0;
 			}
 
 			await using (var stream = File.Create(physicalPath))
 			{
-				await file.Content.CopyToAsync(stream, cancellationToken);
+				await content.CopyToAsync(stream, cancellationToken);
 			}
 
-			return new FileStorageResult
-			{
-				OriginalFileName = Path.GetFileName(file.OriginalFileName),
-				StoredFileName = storedFileName,
-				FileUrl = $"/{storageKey}",
-				ContentType = file.ContentType,
-				FileSize = file.Size,
-				StorageKey = storageKey
-			};
+			return (storedFileName, $"/{storageKey}", storageKey);
 		}
 
 		public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)

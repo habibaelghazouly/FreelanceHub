@@ -2,7 +2,6 @@ using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Exceptions;
 using FreelanceHub.Application.Services.Abstractions;
-using FreelanceHub.Infrastructure.DTOs;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
 
 namespace FreelanceHub.Application.Services.Implementations
@@ -52,19 +51,19 @@ namespace FreelanceHub.Application.Services.Implementations
 				throw new FileUploadException("Only JPG, PNG, WEBP, and GIF images are allowed.");
 			}
 
-			var result = await _fileStorageRepository.SaveAsync(new FileStorageRequest(
+			var result = await _fileStorageRepository.SaveAsync(
 				file.Content,
 				file.OriginalFileName,
-				file.ContentType,
-				file.Size), folderName, cancellationToken);
+				folderName,
+				cancellationToken);
 
 			return new FileUploadResult
 			{
-				OriginalFileName = result.OriginalFileName,
+				OriginalFileName = Path.GetFileName(file.OriginalFileName),
 				StoredFileName = result.StoredFileName,
 				FileUrl = result.FileUrl,
-				ContentType = result.ContentType,
-				FileSize = result.FileSize,
+				ContentType = file.ContentType,
+				FileSize = file.Size,
 				StorageKey = result.StorageKey
 			};
 		}
