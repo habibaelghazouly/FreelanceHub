@@ -1,4 +1,4 @@
-using FreelanceHub.Web.Models;
+using FreelanceHub.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
