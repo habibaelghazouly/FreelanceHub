@@ -2,6 +2,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FreelanceHub.Domain\FreelanceHub.Domain.csproj" />
+    <ProjectReference Include="..\FreelanceHub.Infrastructure\FreelanceHub.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <PropertyGroup>

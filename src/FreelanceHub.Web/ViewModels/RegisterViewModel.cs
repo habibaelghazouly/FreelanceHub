@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace FreelanceHub.Web.ViewModels
 {
@@ -37,5 +38,40 @@ namespace FreelanceHub.Web.ViewModels
 		[Required]
 		[RegularExpression("Client|Freelancer", ErrorMessage = "Choose either Client or Freelancer.")]
 		public string Role { get; set; } = "Client";
+
+		[Display(Name = "Profile image")]
+		public IFormFile? ProfileImage { get; set; }
+
+		[StringLength(150)]
+		[Display(Name = "Company name")]
+		public string? CompanyName { get; set; }
+
+		[Display(Name = "Company description")]
+		public string? CompanyDescription { get; set; }
+
+		[StringLength(500)]
+		[Display(Name = "Company website")]
+		public string? CompanyWebsite { get; set; }
+
+		[StringLength(150)]
+		[Display(Name = "Professional title")]
+		public string? ProfessionalTitle { get; set; }
+
+		[Range(0, 9999999999999999.99)]
+		[Display(Name = "Hourly rate")]
+		public decimal? HourlyRate { get; set; }
+
+		public string? Bio { get; set; }
+
+		[StringLength(30)]
+		[Display(Name = "Experience level")]
+		public string? ExperienceLevel { get; set; }
+
+		[Display(Name = "Availability status")]
+		public int? AvailabilityStatus { get; set; }
+
+		[StringLength(500)]
+		[Display(Name = "Portfolio URL")]
+		public string? ExternalPortfolioUrl { get; set; }
 	}
 }

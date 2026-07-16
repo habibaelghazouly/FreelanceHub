@@ -1,5 +1,10 @@
+using FreelanceHub.Application.Services.Abstractions;
+using FreelanceHub.Application.Services.Implementations;
 using FreelanceHub.Domain.Models;
 using FreelanceHub.Infrastructure.DataBase;
+using FreelanceHub.Infrastructure.Repositories.Abstractions;
+using FreelanceHub.Infrastructure.Repositories.Implementations;
+using FreelanceHub.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +44,21 @@ namespace FreelanceHub.Web
 			});
 
 			builder.Services.AddControllersWithViews();
+
+			var webRootPath = builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+			builder.Services.AddSingleton(new FileStorageOptions
+			{
+				RootPath = webRootPath,
+				PublicBasePath = "uploads"
+			});
+
+			builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
+			builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+			builder.Services.AddScoped<IAttachmentRepository, AttachmentRepository>();
+			builder.Services.AddScoped<IClientProfileRepository, ClientProfileRepository>();
+			builder.Services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
+			builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
 
 			var app = builder.Build();
 
