@@ -18,6 +18,10 @@ namespace FreelanceHub.Infrastructure.DataBase
 
 		public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
 
+		public DbSet<Job> Jobs { get; set; }
+
+		public DbSet<Contract> Contracts { get; set; }
+
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
