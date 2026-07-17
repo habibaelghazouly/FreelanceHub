@@ -18,10 +18,17 @@ namespace FreelanceHub.Infrastructure.Configurations
 			builder.Property(user => user.FirstName).HasColumnName("first_name").HasMaxLength(100).IsRequired();
 			builder.Property(user => user.LastName).HasColumnName("last_name").HasMaxLength(100).IsRequired();
 			builder.Property(user => user.UserStatus).HasColumnName("user_status");
+			builder.Property(user => user.ProfileImageAttachmentId).HasColumnName("profile_image_attachment_id");
 			builder.Property(user => user.EmailConfirmed).HasColumnName("is_email_verified");
 			builder.Property(user => user.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("SYSDATETIME()");
 			builder.Property(user => user.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("SYSDATETIME()");
 			builder.HasIndex(user => user.NormalizedEmail).HasDatabaseName("EmailIndex").IsUnique().HasFilter("[normalized_email] IS NOT NULL");
+
+			builder
+				.HasOne(user => user.ProfileImageAttachment)
+				.WithMany()
+				.HasForeignKey(user => user.ProfileImageAttachmentId)
+				.OnDelete(DeleteBehavior.NoAction);
 		}
 	}
 }

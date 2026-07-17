@@ -93,6 +93,10 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("ProfileImageAttachmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("profile_image_attachment_id");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -127,6 +131,8 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[normalized_username] IS NOT NULL");
 
+                    b.HasIndex("ProfileImageAttachmentId");
+
                     b.ToTable("users", (string)null);
                 });
 
@@ -153,113 +159,194 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("user_roles", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Category", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.Attachment", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("AttachmentId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("category_id");
+                        .HasColumnName("attachment_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttachmentId"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("ContentType")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
-                        .HasColumnName("name");
+                        .HasColumnName("content_type");
 
-                    b.HasKey("Id");
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
 
-                    b.ToTable("categories", (string)null);
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("file_url");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Web Development"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Mobile Development"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "UI / UX Design"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "Writing"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Marketing"
-                        });
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("original_file_name");
+
+                    b.Property<string>("StoredFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("stored_file_name");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("uploaded_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<int>("UploadedByUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("uploaded_by_user_id");
+
+                    b.HasKey("AttachmentId");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.ToTable("attachments", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Tag", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfile", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ClientProfileId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("tag_id");
+                        .HasColumnName("client_profile_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClientProfileId"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("name");
+                    b.Property<string>("CompanyDescription")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("company_description");
 
-                    b.HasKey("Id");
+                    b.Property<int?>("CompanyLogoAttachmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("company_logo_attachment_id");
 
-                    b.ToTable("tags", (string)null);
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("company_name");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "C#"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = ".NET"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "React"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "SQL"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Figma"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "SEO"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "API"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "Content Writing"
-                        });
+                    b.Property<string>("CompanyWebsite")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("company_website");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<int>("RatingAverage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("rating_averge");
+
+                    b.Property<int>("RatingCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("rating_count");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("ClientProfileId");
+
+                    b.HasIndex("CompanyLogoAttachmentId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("client_profiles", (string)null);
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfile", b =>
+                {
+                    b.Property<int>("FreelancerProfileId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("freelancer_profile_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FreelancerProfileId"));
+
+                    b.Property<int?>("AvailabilityStatus")
+                        .HasColumnType("int")
+                        .HasColumnName("availability_status");
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("bio");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<string>("ExperienceLevel")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("experience_level");
+
+                    b.Property<string>("ExternalPortfolioUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("external_portfolio_url");
+
+                    b.Property<decimal?>("HourlyRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("hourly_rate");
+
+                    b.Property<string>("ProfessionalTitle")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("professional_title");
+
+                    b.Property<int>("RatingAverage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("rating_averge");
+
+                    b.Property<int>("RatingCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("rating_count");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("FreelancerProfileId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("freelancer_profiles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -404,6 +491,16 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUser", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "ProfileImageAttachment")
+                        .WithMany()
+                        .HasForeignKey("ProfileImageAttachmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("ProfileImageAttachment");
+                });
+
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUserRole", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
@@ -417,6 +514,46 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.Attachment", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "UploadedByUser")
+                        .WithMany("UploadedAttachments")
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("UploadedByUser");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfile", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "CompanyLogoAttachment")
+                        .WithMany()
+                        .HasForeignKey("CompanyLogoAttachmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "User")
+                        .WithOne("ClientProfile")
+                        .HasForeignKey("FreelanceHub.Domain.Models.ClientProfile", "UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CompanyLogoAttachment");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfile", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "User")
+                        .WithOne("FreelancerProfile")
+                        .HasForeignKey("FreelanceHub.Domain.Models.FreelancerProfile", "UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -453,6 +590,15 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("ClientProfile");
+
+                    b.Navigation("FreelancerProfile");
+
+                    b.Navigation("UploadedAttachments");
                 });
 #pragma warning restore 612, 618
         }

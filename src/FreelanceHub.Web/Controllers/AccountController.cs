@@ -1,22 +1,19 @@
-﻿using FreelanceHub.Domain.Models;
+﻿using FreelanceHub.Application.DTOs.Requests;
+using FreelanceHub.Application.DTOs.Results;
+using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FreelanceHub.Web.Controllers
 {
 	public class AccountController : Controller
 	{
-		private readonly UserManager<ApplicationUser> _userManager;
-		private readonly SignInManager<ApplicationUser> _signInManager;
+		private readonly IApplicationUserService _applicationUserService;
 
-		public AccountController(
-			UserManager<ApplicationUser> userManager,
-			SignInManager<ApplicationUser> signInManager)
+		public AccountController(IApplicationUserService applicationUserService)
 		{
-			_userManager = userManager;
-			_signInManager = signInManager;
+			_applicationUserService = applicationUserService;
 		}
 
 		[HttpGet]
@@ -37,33 +34,23 @@ namespace FreelanceHub.Web.Controllers
 				return View(model);
 			}
 
-			var user = new ApplicationUser
+			Stream? profileImageStream = null;
+			try
 			{
-				UserName = model.Username,
-				Email = model.Email,
-				FirstName = model.FirstName,
-				LastName = model.LastName,
-				UserStatus = 1
-			};
-
-			var result = await _userManager.CreateAsync(user, model.Password);
-			if (result.Succeeded)
-			{
-			
-				var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
-				if (!roleResult.Succeeded)
+				profileImageStream = model.ProfileImage?.OpenReadStream();
+				var result = await _applicationUserService.RegisterAsync(ToRegisterUserRequest(model, profileImageStream), HttpContext.RequestAborted);
+				if (!result.Succeeded)
 				{
-					await _userManager.DeleteAsync(user);
-					AddErrors(roleResult);
+					AddErrors(result);
 					return View(model);
 				}
 
-				await _signInManager.SignInAsync(user, isPersistent: false);
 				return RedirectToLocal(returnUrl);
 			}
-
-			AddErrors(result);
-			return View(model);
+			finally
+			{
+				profileImageStream?.Dispose();
+			}
 		}
 
 		[HttpGet]
@@ -84,25 +71,19 @@ namespace FreelanceHub.Web.Controllers
 				return View(model);
 			}
 
-			var user = await _userManager.FindByEmailAsync(model.EmailOrUsername)
-				?? await _userManager.FindByNameAsync(model.EmailOrUsername);
-
-			if (user is not null)
+			var result = await _applicationUserService.LoginAsync(new LoginRequest
 			{
-				var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: true);
-				if (result.Succeeded)
-				{
-					return RedirectToLocal(returnUrl);
-				}
+				EmailOrUsername = model.EmailOrUsername,
+				Password = model.Password,
+				RememberMe = model.RememberMe
+			});
 
-				if (result.IsLockedOut)
-				{
-					ModelState.AddModelError(string.Empty, "This account is temporarily locked. Try again later.");
-					return View(model);
-				}
+			if (result.Succeeded)
+			{
+				return RedirectToLocal(returnUrl);
 			}
 
-			ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+			AddErrors(result);
 			return View(model);
 		}
 
@@ -111,7 +92,7 @@ namespace FreelanceHub.Web.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Logout()
 		{
-			await _signInManager.SignOutAsync();
+			await _applicationUserService.LogoutAsync();
 			return RedirectToAction("Index", "Home");
 		}
 
@@ -132,11 +113,40 @@ namespace FreelanceHub.Web.Controllers
 			return RedirectToAction("Index", "Home");
 		}
 
-		private void AddErrors(IdentityResult result)
+		private static RegisterUserRequest ToRegisterUserRequest(RegisterViewModel model, Stream? profileImageStream)
+		{
+			return new RegisterUserRequest
+			{
+				Username = model.Username,
+				Email = model.Email,
+				FirstName = model.FirstName,
+				LastName = model.LastName,
+				Password = model.Password,
+				Role = model.Role,
+				ProfileImage = model.ProfileImage is null || profileImageStream is null
+					? null
+					: new UploadedFileRequest(
+						profileImageStream,
+						model.ProfileImage.FileName,
+						model.ProfileImage.ContentType,
+						model.ProfileImage.Length),
+				CompanyName = model.CompanyName,
+				CompanyDescription = model.CompanyDescription,
+				CompanyWebsite = model.CompanyWebsite,
+				ProfessionalTitle = model.ProfessionalTitle,
+				HourlyRate = model.HourlyRate,
+				Bio = model.Bio,
+				ExperienceLevel = model.ExperienceLevel,
+				AvailabilityStatus = model.AvailabilityStatus,
+				ExternalPortfolioUrl = model.ExternalPortfolioUrl
+			};
+		}
+
+		private void AddErrors(ApplicationUserServiceResult result)
 		{
 			foreach (var error in result.Errors)
 			{
-				ModelState.AddModelError(string.Empty, error.Description);
+				ModelState.AddModelError(string.Empty, error);
 			}
 		}
 	}

@@ -12,7 +12,7 @@
                 <h1 class="h3 mb-3">Create Account</h1>
                 <p class="text-muted mb-4">Join as a client or freelancer.</p>
 
-                <form asp-action="Register" asp-route-returnUrl="@returnUrl" method="post">
+                <form asp-action="Register" asp-route-returnUrl="@returnUrl" method="post" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <div class="row">
@@ -50,6 +50,86 @@
                         <span asp-validation-for="Role" class="text-danger"></span>
                     </div>
 
+                    <div class="mb-3">
+                        <label asp-for="ProfileImage" class="form-label"></label>
+                        <input asp-for="ProfileImage" type="file" class="form-control" accept="image/*" />
+                        <div class="form-text">Optional. JPG, PNG, WEBP, or GIF up to 2 MB.</div>
+                        <span asp-validation-for="ProfileImage" class="text-danger"></span>
+                    </div>
+
+                    <div id="clientFields" class="border rounded p-3 mb-3">
+                        <h2 class="h6 mb-3">Client details</h2>
+
+                        <div class="mb-3">
+                            <label asp-for="CompanyName" class="form-label"></label>
+                            <input asp-for="CompanyName" class="form-control" />
+                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CompanyWebsite" class="form-label"></label>
+                            <input asp-for="CompanyWebsite" class="form-control" />
+                            <span asp-validation-for="CompanyWebsite" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-0">
+                            <label asp-for="CompanyDescription" class="form-label"></label>
+                            <textarea asp-for="CompanyDescription" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="CompanyDescription" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div id="freelancerFields" class="border rounded p-3 mb-3">
+                        <h2 class="h6 mb-3">Freelancer details</h2>
+
+                        <div class="mb-3">
+                            <label asp-for="ProfessionalTitle" class="form-label"></label>
+                            <input asp-for="ProfessionalTitle" class="form-control" />
+                            <span asp-validation-for="ProfessionalTitle" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="HourlyRate" class="form-label"></label>
+                                <input asp-for="HourlyRate" class="form-control" />
+                                <span asp-validation-for="HourlyRate" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ExperienceLevel" class="form-label"></label>
+                                <select asp-for="ExperienceLevel" class="form-select">
+                                    <option value="">Select level</option>
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Expert">Expert</option>
+                                </select>
+                                <span asp-validation-for="ExperienceLevel" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="AvailabilityStatus" class="form-label"></label>
+                            <select asp-for="AvailabilityStatus" class="form-select">
+                                <option value="">Select status</option>
+                                <option value="1">Available</option>
+                                <option value="0">Unavailable</option>
+                            </select>
+                            <span asp-validation-for="AvailabilityStatus" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ExternalPortfolioUrl" class="form-label"></label>
+                            <input asp-for="ExternalPortfolioUrl" class="form-control" />
+                            <span asp-validation-for="ExternalPortfolioUrl" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-0">
+                            <label asp-for="Bio" class="form-label"></label>
+                            <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Bio" class="text-danger"></span>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="Password" class="form-label"></label>
@@ -77,4 +157,20 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const roleSelect = document.getElementById('Role');
+            const clientFields = document.getElementById('clientFields');
+            const freelancerFields = document.getElementById('freelancerFields');
+
+            function syncProfileFields() {
+                const isClient = roleSelect.value === 'Client';
+                clientFields.classList.toggle('d-none', !isClient);
+                freelancerFields.classList.toggle('d-none', isClient);
+            }
+
+            roleSelect.addEventListener('change', syncProfileFields);
+            syncProfileFields();
+        })();
+    </script>
 }
