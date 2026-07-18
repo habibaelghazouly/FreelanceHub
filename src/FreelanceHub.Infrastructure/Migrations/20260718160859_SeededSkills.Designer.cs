@@ -4,6 +4,7 @@ using FreelanceHub.Infrastructure.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FreelanceHub.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260718160859_SeededSkills")]
+    partial class SeededSkills
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,23 @@ namespace FreelanceHub.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
+                {
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int")
+                        .HasColumnName("application_id");
+
+                    b.Property<int>("AttachmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("attachment_id");
+
+                    b.HasKey("ApplicationId", "AttachmentId");
+
+                    b.HasIndex("AttachmentId");
+
+                    b.ToTable("application_attachments", (string)null);
+                });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUser", b =>
                 {
@@ -93,10 +113,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("ProfileImageAttachmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("profile_image_attachment_id");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -131,8 +147,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[normalized_username] IS NOT NULL");
 
-                    b.HasIndex("ProfileImageAttachmentId");
-
                     b.ToTable("users", (string)null);
                 });
 
@@ -161,12 +175,12 @@ namespace FreelanceHub.Infrastructure.Migrations
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Attachment", b =>
                 {
-                    b.Property<int>("AttachmentId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("attachment_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttachmentId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContentType")
                         .HasMaxLength(100)
@@ -204,204 +218,136 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("uploaded_by_user_id");
 
-                    b.HasKey("AttachmentId");
+                    b.HasKey("Id");
 
                     b.HasIndex("UploadedByUserId");
 
-                    b.ToTable("attachments", (string)null);
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("category_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("categories", (string)null);
-
-                    b.HasData(
-                        new
+                    b.ToTable("attachments", null, t =>
                         {
-                            Id = 1,
-                            Name = "Web Development"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Mobile Development"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "UI / UX Design"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "Writing"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Marketing"
+                            t.HasCheckConstraint("chk_attachments_file_size", "[file_size] IS NULL OR [file_size] >= 0");
                         });
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfile", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfileAttachment", b =>
                 {
                     b.Property<int>("ClientProfileId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("client_profile_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClientProfileId"));
-
-                    b.Property<string>("CompanyDescription")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("company_description");
-
-                    b.Property<int?>("CompanyLogoAttachmentId")
+                    b.Property<int>("AttachmentId")
                         .HasColumnType("int")
-                        .HasColumnName("company_logo_attachment_id");
+                        .HasColumnName("attachment_id");
 
-                    b.Property<string>("CompanyName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)")
-                        .HasColumnName("company_name");
+                    b.Property<string>("AttachmentType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("attachment_type");
 
-                    b.Property<string>("CompanyWebsite")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("company_website");
+                    b.HasKey("ClientProfileId", "AttachmentId");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSDATETIME()");
+                    b.HasIndex("AttachmentId");
 
-                    b.Property<int>("RatingAverage")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("rating_averge");
-
-                    b.Property<int>("RatingCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("rating_count");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSDATETIME()");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("ClientProfileId");
-
-                    b.HasIndex("CompanyLogoAttachmentId");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("client_profiles", (string)null);
+                    b.ToTable("client_profile_attachments", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfile", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ContractAttachment", b =>
+                {
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int")
+                        .HasColumnName("contract_id");
+
+                    b.Property<int>("AttachmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("attachment_id");
+
+                    b.HasKey("ContractId", "AttachmentId");
+
+                    b.HasIndex("AttachmentId");
+
+                    b.ToTable("contract_attachments", (string)null);
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfileAttachment", b =>
                 {
                     b.Property<int>("FreelancerProfileId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("freelancer_profile_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FreelancerProfileId"));
-
-                    b.Property<int?>("AvailabilityStatus")
+                    b.Property<int>("AttachmentId")
                         .HasColumnType("int")
-                        .HasColumnName("availability_status");
+                        .HasColumnName("attachment_id");
 
-                    b.Property<string>("Bio")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("bio");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSDATETIME()");
-
-                    b.Property<string>("ExperienceLevel")
+                    b.Property<string>("AttachmentDescription")
+                        .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)")
-                        .HasColumnName("experience_level");
+                        .HasColumnName("attachment_description");
 
-                    b.Property<string>("ExternalPortfolioUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("external_portfolio_url");
+                    b.HasKey("FreelancerProfileId", "AttachmentId");
 
-                    b.Property<decimal?>("HourlyRate")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("hourly_rate");
+                    b.HasIndex("AttachmentId");
 
-                    b.Property<string>("ProfessionalTitle")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)")
-                        .HasColumnName("professional_title");
-
-                    b.Property<int>("RatingAverage")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("rating_averge");
-
-                    b.Property<int>("RatingCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("rating_count");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSDATETIME()");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("FreelancerProfileId");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("freelancer_profiles", (string)null);
+                    b.ToTable("freelancer_profile_attachments", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Tag", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerSkill", b =>
+                {
+                    b.Property<int>("FreelancerProfileId")
+                        .HasColumnType("int")
+                        .HasColumnName("freelancer_profile_id");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int")
+                        .HasColumnName("skill_id");
+
+                    b.HasKey("FreelancerProfileId", "SkillId");
+
+                    b.HasIndex("SkillId");
+
+                    b.ToTable("freelancer_skills", (string)null);
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.JobAttachment", b =>
+                {
+                    b.Property<int>("JobId")
+                        .HasColumnType("int")
+                        .HasColumnName("job_id");
+
+                    b.Property<int>("AttachmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("attachment_id");
+
+                    b.HasKey("JobId", "AttachmentId");
+
+                    b.HasIndex("AttachmentId");
+
+                    b.ToTable("job_attachments", (string)null);
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.JobSkill", b =>
+                {
+                    b.Property<int>("JobId")
+                        .HasColumnType("int")
+                        .HasColumnName("job_id");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int")
+                        .HasColumnName("skill_id");
+
+                    b.HasKey("JobId", "SkillId");
+
+                    b.HasIndex("SkillId");
+
+                    b.ToTable("job_skills", (string)null);
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.Skill", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("tag_id");
+                        .HasColumnName("skill_id");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
@@ -413,18 +359,21 @@ namespace FreelanceHub.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("tags", (string)null);
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("skills", (string)null);
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            Name = "C#"
+                            Name = "JavaScript"
                         },
                         new
                         {
                             Id = 2,
-                            Name = ".NET"
+                            Name = "TypeScript"
                         },
                         new
                         {
@@ -434,27 +383,227 @@ namespace FreelanceHub.Infrastructure.Migrations
                         new
                         {
                             Id = 4,
-                            Name = "SQL"
+                            Name = "Angular"
                         },
                         new
                         {
                             Id = 5,
-                            Name = "Figma"
+                            Name = "Vue.js"
                         },
                         new
                         {
                             Id = 6,
-                            Name = "SEO"
+                            Name = "Node.js"
                         },
                         new
                         {
                             Id = 7,
-                            Name = "API"
+                            Name = "ASP.NET Core"
                         },
                         new
                         {
                             Id = 8,
+                            Name = "PHP"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Laravel"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Python"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Django"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Ruby on Rails"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "WordPress"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "HTML/CSS"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Swift"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "Kotlin"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Name = "Flutter"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Name = "React Native"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Name = "UI/UX Design"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Name = "Figma"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Name = "Adobe Photoshop"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Name = "Adobe Illustrator"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Name = "Graphic Design"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Name = "Logo Design"
+                        },
+                        new
+                        {
+                            Id = 25,
                             Name = "Content Writing"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            Name = "Copywriting"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            Name = "Technical Writing"
+                        },
+                        new
+                        {
+                            Id = 28,
+                            Name = "Translation"
+                        },
+                        new
+                        {
+                            Id = 29,
+                            Name = "Editing & Proofreading"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            Name = "SEO"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            Name = "Social Media Marketing"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            Name = "Email Marketing"
+                        },
+                        new
+                        {
+                            Id = 33,
+                            Name = "Google Ads"
+                        },
+                        new
+                        {
+                            Id = 34,
+                            Name = "Data Analysis"
+                        },
+                        new
+                        {
+                            Id = 35,
+                            Name = "SQL"
+                        },
+                        new
+                        {
+                            Id = 36,
+                            Name = "Machine Learning"
+                        },
+                        new
+                        {
+                            Id = 37,
+                            Name = "Power BI"
+                        },
+                        new
+                        {
+                            Id = 38,
+                            Name = "Docker"
+                        },
+                        new
+                        {
+                            Id = 39,
+                            Name = "Kubernetes"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            Name = "AWS"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            Name = "Azure"
+                        },
+                        new
+                        {
+                            Id = 42,
+                            Name = "CI/CD"
+                        },
+                        new
+                        {
+                            Id = 43,
+                            Name = "Project Management"
+                        },
+                        new
+                        {
+                            Id = 44,
+                            Name = "Virtual Assistance"
+                        },
+                        new
+                        {
+                            Id = 45,
+                            Name = "Bookkeeping"
+                        },
+                        new
+                        {
+                            Id = 46,
+                            Name = "Video Editing"
+                        },
+                        new
+                        {
+                            Id = 47,
+                            Name = "Voice Over"
+                        },
+                        new
+                        {
+                            Id = 48,
+                            Name = "Motion Graphics"
                         });
                 });
 
@@ -600,14 +749,15 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUser", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
                 {
-                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "ProfileImageAttachment")
-                        .WithMany()
-                        .HasForeignKey("ProfileImageAttachmentId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
+                        .WithMany("ApplicationAttachments")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("ProfileImageAttachment");
+                    b.Navigation("Attachment");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUserRole", b =>
@@ -628,7 +778,7 @@ namespace FreelanceHub.Infrastructure.Migrations
             modelBuilder.Entity("FreelanceHub.Domain.Models.Attachment", b =>
                 {
                     b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "UploadedByUser")
-                        .WithMany("UploadedAttachments")
+                        .WithMany()
                         .HasForeignKey("UploadedByUserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -636,33 +786,70 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.Navigation("UploadedByUser");
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfile", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfileAttachment", b =>
                 {
-                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "CompanyLogoAttachment")
-                        .WithMany()
-                        .HasForeignKey("CompanyLogoAttachmentId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "User")
-                        .WithOne("ClientProfile")
-                        .HasForeignKey("FreelanceHub.Domain.Models.ClientProfile", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
+                        .WithMany("ClientProfileAttachments")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CompanyLogoAttachment");
-
-                    b.Navigation("User");
+                    b.Navigation("Attachment");
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfile", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ContractAttachment", b =>
                 {
-                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "User")
-                        .WithOne("FreelancerProfile")
-                        .HasForeignKey("FreelanceHub.Domain.Models.FreelancerProfile", "UserId")
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
+                        .WithMany("ContractAttachments")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attachment");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfileAttachment", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
+                        .WithMany("FreelancerProfileAttachments")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attachment");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerSkill", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Skill", "Skill")
+                        .WithMany("FreelancerSkills")
+                        .HasForeignKey("SkillId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Skill");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.JobAttachment", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
+                        .WithMany("JobAttachments")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attachment");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.JobSkill", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Skill", "Skill")
+                        .WithMany("JobSkills")
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Skill");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -701,13 +888,24 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUser", b =>
+            modelBuilder.Entity("FreelanceHub.Domain.Models.Attachment", b =>
                 {
-                    b.Navigation("ClientProfile");
+                    b.Navigation("ApplicationAttachments");
 
-                    b.Navigation("FreelancerProfile");
+                    b.Navigation("ClientProfileAttachments");
 
-                    b.Navigation("UploadedAttachments");
+                    b.Navigation("ContractAttachments");
+
+                    b.Navigation("FreelancerProfileAttachments");
+
+                    b.Navigation("JobAttachments");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.Skill", b =>
+                {
+                    b.Navigation("FreelancerSkills");
+
+                    b.Navigation("JobSkills");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,6 @@
 ﻿using FreelanceHub.Domain.Models;
+using FreelanceHub.Domain.Models;
+using FreelanceHub.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,15 +14,31 @@ namespace FreelanceHub.Infrastructure.DataBase
 		{
 		}
 
-		public DbSet<Attachment> Attachments { get; set; }
+		public DbSet<Skill> Skills => Set<Skill>();
 
-		public DbSet<ClientProfile> ClientProfiles { get; set; }
+		public DbSet<Attachment> Attachments => Set<Attachment>();
 
-		public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
+		public DbSet<FreelancerSkill> FreelancerSkills => Set<FreelancerSkill>();
 
-		public DbSet<Job> Jobs { get; set; }
+		public DbSet<JobSkill> JobSkills => Set<JobSkill>();
 
-		public DbSet<Contract> Contracts { get; set; }
+		public DbSet<FreelancerProfileAttachment> FreelancerProfileAttachments => Set<FreelancerProfileAttachment>();
+
+		public DbSet<ClientProfileAttachment> ClientProfileAttachments => Set<ClientProfileAttachment>();
+
+		public DbSet<JobAttachment> JobAttachments => Set<JobAttachment>();
+
+		public DbSet<ApplicationAttachment> ApplicationAttachments => Set<ApplicationAttachment>();
+
+		public DbSet<ContractAttachment> ContractAttachments => Set<ContractAttachment>();
+
+		public DbSet<FreelancerProfile> FreelancerProfiles => Set<FreelancerProfile>();
+		public DbSet<ClientProfile> ClientProfiles => Set<ClientProfile>();
+		public DbSet<Job> Jobs => Set<Job>();
+		public DbSet<Contract> Contracts => Set<Contract>();
+
+		// Requires JobApplication entity (not included in this delivery).
+		// public DbSet<JobApplication> Applications => Set<JobApplication>();
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
