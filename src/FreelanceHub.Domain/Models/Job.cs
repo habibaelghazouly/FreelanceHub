@@ -24,6 +24,8 @@ namespace FreelanceHub.Domain.Models
         // Navigation properties
 
         public ApplicationUser ClientUser { get; set; } = null!;
+
+        public ICollection<Application> Applications { get; set; } = new List<Application>();
         public Contract? Contract { get; set; }
         //public ICollection<JobCategory> JobCategories { get; set; } = new List<JobCategory>();
         //public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();

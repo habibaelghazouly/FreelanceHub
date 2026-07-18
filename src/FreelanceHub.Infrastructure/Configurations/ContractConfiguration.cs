@@ -28,10 +28,10 @@ namespace FreelanceHub.Infrastructure.Configurations
                 .HasForeignKey<Contract>(contract => contract.JobId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //builder.HasOne(contract => contract.AcceptedApplication)
-            //    .WithOne(application => application.Contract)
-            //    .HasForeignKey(contract => contract.ApplicationId)
-            //    .OnDelete(DeleteBehavior.NoAction);
+            builder.HasOne(contract => contract.Application)
+               .WithOne(application => application.Contract)
+               .HasForeignKey<Contract>(contract => contract.ApplicationId)
+               .OnDelete(DeleteBehavior.NoAction);
 
             //builder.HasMany(contract => contract.Reviews)
             //    .WithOne(review => review.Contract)

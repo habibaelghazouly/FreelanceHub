@@ -27,5 +27,7 @@ namespace FreelanceHub.Domain.Models
 		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
 		public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+		public ICollection<Application> Applications { get; set; } = new List<Application>();
 	}
 }
