@@ -15,11 +15,10 @@ namespace FreelanceHub.Infrastructure.Configurations.Skills
 			builder.Property(js => js.JobId).HasColumnName("job_id");
 			builder.Property(js => js.SkillId).HasColumnName("skill_id");
 
-			// Requires the Job entity (not included in this delivery).
-			// builder.HasOne(js => js.Job)
-			// 	.WithMany(job => job.JobSkills)
-			// 	.HasForeignKey(js => js.JobId)
-			// 	.OnDelete(DeleteBehavior.NoAction);
+			builder.HasOne(js => js.Job)
+				.WithMany(job => job.JobSkills)
+				.HasForeignKey(js => js.JobId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.HasOne(js => js.Skill)
 				.WithMany(skill => skill.JobSkills)

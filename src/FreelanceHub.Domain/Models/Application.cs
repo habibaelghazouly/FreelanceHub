@@ -25,5 +25,7 @@ namespace FreelanceHub.Domain.Models
 
         public Contract? Contract { get; set; } // Navigation property for the associated contract
 
+        public ICollection<ApplicationAttachment> ApplicationAttachments { get; set; } = new List<ApplicationAttachment>();
+
     }
 }

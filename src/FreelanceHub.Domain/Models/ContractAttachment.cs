@@ -4,8 +4,7 @@ namespace FreelanceHub.Domain.Models
 	{
 		public int ContractId { get; set; }
 
-		// Requires the Contract entity (not included in this delivery).
-		// public Contract Contract { get; set; } = null!;
+		public Contract Contract { get; set; } = null!;
 
 		public int AttachmentId { get; set; }
 

@@ -1,6 +1,4 @@
 ﻿using FreelanceHub.Domain.Models;
-using FreelanceHub.Domain.Models;
-using FreelanceHub.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -37,8 +35,7 @@ namespace FreelanceHub.Infrastructure.DataBase
 		public DbSet<Job> Jobs => Set<Job>();
 		public DbSet<Contract> Contracts => Set<Contract>();
 
-		// Requires JobApplication entity (not included in this delivery).
-		// public DbSet<JobApplication> Applications => Set<JobApplication>();
+		public DbSet<Application> Applications => Set<Application>();
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{

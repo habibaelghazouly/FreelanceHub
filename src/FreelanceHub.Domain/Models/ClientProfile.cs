@@ -25,5 +25,7 @@ namespace FreelanceHub.Domain.Models
 		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
 		public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+		public ICollection<ClientProfileAttachment> ClientProfileAttachments { get; set; } = new List<ClientProfileAttachment>();
 	}
 }
