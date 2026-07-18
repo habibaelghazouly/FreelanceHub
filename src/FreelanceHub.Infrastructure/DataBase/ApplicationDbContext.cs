@@ -1,6 +1,6 @@
 ﻿using FreelanceHub.Domain.Models;
-using FreelanceHub.Domain.Models.Attachments;
-using FreelanceHub.Domain.Models.Skills;
+using FreelanceHub.Domain.Models;
+using FreelanceHub.Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

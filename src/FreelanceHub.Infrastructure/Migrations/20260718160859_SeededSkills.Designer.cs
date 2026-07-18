@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FreelanceHub.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260715192308_AddSkillsAndAttachments")]
-    partial class AddSkillsAndAttachments
+    [Migration("20260718160859_SeededSkills")]
+    partial class SeededSkills
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,23 @@ namespace FreelanceHub.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
+                {
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int")
+                        .HasColumnName("application_id");
+
+                    b.Property<int>("AttachmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("attachment_id");
+
+                    b.HasKey("ApplicationId", "AttachmentId");
+
+                    b.HasIndex("AttachmentId");
+
+                    b.ToTable("application_attachments", (string)null);
+                });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUser", b =>
                 {
@@ -156,23 +173,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("user_roles", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
-                {
-                    b.Property<int>("ApplicationId")
-                        .HasColumnType("int")
-                        .HasColumnName("application_id");
-
-                    b.Property<int>("AttachmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("attachment_id");
-
-                    b.HasKey("ApplicationId", "AttachmentId");
-
-                    b.HasIndex("AttachmentId");
-
-                    b.ToTable("application_attachments", (string)null);
-                });
-
             modelBuilder.Entity("FreelanceHub.Domain.Models.Attachment", b =>
                 {
                     b.Property<int>("Id")
@@ -291,23 +291,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("freelancer_profile_attachments", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.JobAttachment", b =>
-                {
-                    b.Property<int>("JobId")
-                        .HasColumnType("int")
-                        .HasColumnName("job_id");
-
-                    b.Property<int>("AttachmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("attachment_id");
-
-                    b.HasKey("JobId", "AttachmentId");
-
-                    b.HasIndex("AttachmentId");
-
-                    b.ToTable("job_attachments", (string)null);
-                });
-
             modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerSkill", b =>
                 {
                     b.Property<int>("FreelancerProfileId")
@@ -323,6 +306,23 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.HasIndex("SkillId");
 
                     b.ToTable("freelancer_skills", (string)null);
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.JobAttachment", b =>
+                {
+                    b.Property<int>("JobId")
+                        .HasColumnType("int")
+                        .HasColumnName("job_id");
+
+                    b.Property<int>("AttachmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("attachment_id");
+
+                    b.HasKey("JobId", "AttachmentId");
+
+                    b.HasIndex("AttachmentId");
+
+                    b.ToTable("job_attachments", (string)null);
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.JobSkill", b =>
@@ -749,6 +749,17 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
+                        .WithMany("ApplicationAttachments")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attachment");
+                });
+
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUserRole", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
@@ -762,17 +773,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
-                {
-                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
-                        .WithMany("ApplicationAttachments")
-                        .HasForeignKey("AttachmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attachment");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Attachment", b =>
@@ -819,17 +819,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.Navigation("Attachment");
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.JobAttachment", b =>
-                {
-                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
-                        .WithMany("JobAttachments")
-                        .HasForeignKey("AttachmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attachment");
-                });
-
             modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerSkill", b =>
                 {
                     b.HasOne("FreelanceHub.Domain.Models.Skill", "Skill")
@@ -839,6 +828,17 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Skill");
+                });
+
+            modelBuilder.Entity("FreelanceHub.Domain.Models.JobAttachment", b =>
+                {
+                    b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
+                        .WithMany("JobAttachments")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attachment");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.JobSkill", b =>

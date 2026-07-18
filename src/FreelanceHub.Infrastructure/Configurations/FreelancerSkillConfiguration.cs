@@ -1,4 +1,4 @@
-using FreelanceHub.Domain.Models.Skills;
+using FreelanceHub.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

@@ -1,4 +1,4 @@
-namespace FreelanceHub.Domain.Models.Skills
+namespace FreelanceHub.Domain.Models
 {
 	public class FreelancerSkill
 	{

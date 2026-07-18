@@ -1,4 +1,4 @@
-namespace FreelanceHub.Domain.Models.Attachments
+namespace FreelanceHub.Domain.Models
 {
 	public class Attachment
 	{
