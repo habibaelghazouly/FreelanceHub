@@ -2,7 +2,7 @@ namespace FreelanceHub.Domain.Models
 {
 	public class Attachment
 	{
-		public int Id { get; set; }
+		public int AttachmentId { get; set; }
 
 		public int UploadedByUserId { get; set; }
 

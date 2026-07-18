@@ -32,12 +32,13 @@ namespace FreelanceHub.Infrastructure.DataBase
 
 		public DbSet<ContractAttachment> ContractAttachments => Set<ContractAttachment>();
 
-		// Requires FreelancerProfile, ClientProfile, Job, JobApplication, Contract entities (not included in this delivery).
-		// public DbSet<FreelancerProfile> FreelancerProfiles => Set<FreelancerProfile>();
-		// public DbSet<ClientProfile> ClientProfiles => Set<ClientProfile>();
-		// public DbSet<Job> Jobs => Set<Job>();
+		public DbSet<FreelancerProfile> FreelancerProfiles => Set<FreelancerProfile>();
+		public DbSet<ClientProfile> ClientProfiles => Set<ClientProfile>();
+		public DbSet<Job> Jobs => Set<Job>();
+		public DbSet<Contract> Contracts => Set<Contract>();
+
+		// Requires JobApplication entity (not included in this delivery).
 		// public DbSet<JobApplication> Applications => Set<JobApplication>();
-		// public DbSet<Contract> Contracts => Set<Contract>();
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
