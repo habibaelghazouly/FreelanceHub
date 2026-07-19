@@ -8,7 +8,7 @@ namespace FreelanceHub.Domain.Models
 
         // FK
         public int JobId { get; set; }
-        public int FreelancerProfileId { get; set; }
+        public int FreelancerUserId { get; set; }
 
 
         public decimal ProposedAmount { get; set; }
@@ -21,7 +21,8 @@ namespace FreelanceHub.Domain.Models
 
         // Navigation properties
         public Job Job { get; set; } = null!;
-        public FreelancerProfile FreelancerProfile { get; set; } = null!;
+        
+        public ApplicationUser FreelancerUser { get; set; } = null!;
 
         public Contract? Contract { get; set; } // Navigation property for the associated contract
 

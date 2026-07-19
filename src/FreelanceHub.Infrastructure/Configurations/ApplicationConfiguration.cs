@@ -15,7 +15,7 @@ namespace FreelanceHub.Infrastructure.Configurations
             builder.HasAlternateKey(application => new { application.ApplicationId, application.JobId });
             builder.Property(application => application.ApplicationId).HasColumnName("application_id");
             builder.Property(application => application.JobId).HasColumnName("job_id").IsRequired();
-            builder.Property(application => application.FreelancerProfileId).HasColumnName("freelancer_profile_id").IsRequired();
+            builder.Property(application => application.FreelancerUserId).HasColumnName("freelancer_user_id").IsRequired();          
             builder.Property(application => application.ProposedAmount).HasColumnName("proposed_amount").HasPrecision(18, 2).IsRequired();
             builder.Property(application => application.CoverLetter).HasColumnName("cover_letter").IsRequired();
             builder.Property(application => application.ApplicationStatus).HasColumnName("application_status").HasConversion<int>().HasDefaultValue(ApplicationStatus.Submitted).HasSentinel((ApplicationStatus)0).IsRequired();
@@ -30,9 +30,9 @@ namespace FreelanceHub.Infrastructure.Configurations
                 .HasForeignKey(application => application.JobId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(application => application.FreelancerProfile)
-                .WithMany(freelancerProfile => freelancerProfile.Applications)
-                .HasForeignKey(application => application.FreelancerProfileId)
+            builder.HasOne(application => application.FreelancerUser)
+                .WithMany(freelancerUser => freelancerUser.Applications)
+                .HasForeignKey(application => application.FreelancerUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
         }
