@@ -2,6 +2,7 @@ using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Exceptions;
 using FreelanceHub.Application.Services.Abstractions;
+using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using Microsoft.AspNetCore.Identity;
@@ -53,7 +54,7 @@ namespace FreelanceHub.Application.Services.Implementations
 				Email = request.Email,
 				FirstName = request.FirstName,
 				LastName = request.LastName,
-				UserStatus = 1
+				UserStatus = UserStatus.Active
 			};
 
 			await _unitOfWork.BeginTransactionAsync(cancellationToken);

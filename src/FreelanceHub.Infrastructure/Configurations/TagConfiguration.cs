@@ -13,6 +13,8 @@ namespace FreelanceHub.Infrastructure.Configurations
             builder.Property(tag => tag.Id).HasColumnName("tag_id");
             builder.Property(tag => tag.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
 
+            builder.HasIndex(tag => tag.Name).IsUnique();
+
             builder.HasData(
                 new  { Id = 1, Name = "C#" },
                 new  { Id = 2, Name = ".NET" },

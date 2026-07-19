@@ -13,6 +13,8 @@ namespace FreelanceHub.Infrastructure.Configurations
             builder.Property(category => category.Id).HasColumnName("category_id");
             builder.Property(category => category.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
 
+            builder.HasIndex(category => category.Name).IsUnique();
+
             builder.HasData(
                 new Category { Id = 1, Name = "Web Development" },
                 new Category { Id = 2, Name = "Mobile Development" },

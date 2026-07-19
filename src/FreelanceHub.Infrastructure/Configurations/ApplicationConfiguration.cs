@@ -1,3 +1,4 @@
+using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,16 +9,21 @@ namespace FreelanceHub.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Application> builder)
         {
-            builder.ToTable("applications");
+            builder.ToTable("applications", table =>
+                table.HasCheckConstraint("chk_applications_status", "[application_status] IN (50, 51, 52, 53, 54)"));
             builder.HasKey(application => application.ApplicationId);
+            builder.HasAlternateKey(application => new { application.ApplicationId, application.JobId });
             builder.Property(application => application.ApplicationId).HasColumnName("application_id");
             builder.Property(application => application.JobId).HasColumnName("job_id").IsRequired();
-            builder.Property(application => application.FreelancerProfileId).HasColumnName("freelancer_profile_id").IsRequired();            builder.Property(application => application.ProposedAmount).HasColumnName("proposed_amount").IsRequired();
+            builder.Property(application => application.FreelancerProfileId).HasColumnName("freelancer_profile_id").IsRequired();
+            builder.Property(application => application.ProposedAmount).HasColumnName("proposed_amount").HasPrecision(18, 2).IsRequired();
             builder.Property(application => application.CoverLetter).HasColumnName("cover_letter").IsRequired();
-            builder.Property(application => application.ApplicationStatus).HasColumnName("application_status").IsRequired();
-            builder.Property(application => application.CreatedAt).HasColumnName("created_at").IsRequired();
-            builder.Property(application => application.UpdatedAt).HasColumnName("updated_at").IsRequired();
+            builder.Property(application => application.ApplicationStatus).HasColumnName("application_status").HasConversion<int>().HasDefaultValue(ApplicationStatus.Submitted).HasSentinel((ApplicationStatus)0).IsRequired();
+            builder.Property(application => application.CreatedAt).HasColumnName("created_at").IsRequired().HasDefaultValueSql("SYSUTCDATETIME()");
+            builder.Property(application => application.UpdatedAt).HasColumnName("updated_at").IsRequired().HasDefaultValueSql("SYSUTCDATETIME()");
             builder.Property(application => application.TimelineDays).HasColumnName("timeline_days").IsRequired();
+
+            builder.HasQueryFilter(application => !application.Job.IsDeleted);
             // Relationships
             builder.HasOne(application => application.Job)
                 .WithMany(job => job.Applications)

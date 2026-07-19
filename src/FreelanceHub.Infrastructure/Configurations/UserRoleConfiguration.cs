@@ -11,7 +11,7 @@ namespace FreelanceHub.Infrastructure.Configurations
 			builder.ToTable("user_roles");
 			builder.Property(userRole => userRole.UserId).HasColumnName("user_id");
 			builder.Property(userRole => userRole.RoleId).HasColumnName("role_id");
-			builder.Property(userRole => userRole.AssignedAt).HasColumnName("assigned_at").HasDefaultValueSql("SYSDATETIME()");
+			builder.Property(userRole => userRole.AssignedAt).HasColumnName("assigned_at").HasDefaultValueSql("SYSUTCDATETIME()");
 		}
 	}
 }

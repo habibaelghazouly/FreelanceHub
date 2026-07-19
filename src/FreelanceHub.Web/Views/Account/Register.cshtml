@@ -97,11 +97,8 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="ExperienceLevel" class="form-label"></label>
-                                <select asp-for="ExperienceLevel" class="form-select">
+                                <select asp-for="ExperienceLevel" asp-items="Html.GetEnumSelectList<FreelancerExperienceLevel>()" class="form-select">
                                     <option value="">Select level</option>
-                                    <option value="Beginner">Beginner</option>
-                                    <option value="Intermediate">Intermediate</option>
-                                    <option value="Expert">Expert</option>
                                 </select>
                                 <span asp-validation-for="ExperienceLevel" class="text-danger"></span>
                             </div>
@@ -109,10 +106,8 @@
 
                         <div class="mb-3">
                             <label asp-for="AvailabilityStatus" class="form-label"></label>
-                            <select asp-for="AvailabilityStatus" class="form-select">
+                            <select asp-for="AvailabilityStatus" asp-items="Html.GetEnumSelectList<FreelancerAvailabilityStatus>()" class="form-select">
                                 <option value="">Select status</option>
-                                <option value="1">Available</option>
-                                <option value="0">Unavailable</option>
                             </select>
                             <span asp-validation-for="AvailabilityStatus" class="text-danger"></span>
                         </div>
