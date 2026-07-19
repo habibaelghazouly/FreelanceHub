@@ -26,5 +26,8 @@ namespace FreelanceHub.Domain.Models
 		public DateTime UpdatedAt { get; set; }
         public virtual ICollection<Job> Jobs { get; set; } = new List<Job>();
 
-    }
+		public ICollection<Application> Applications { get; set; } = new List<Application>();
+
+
+	}
 }
