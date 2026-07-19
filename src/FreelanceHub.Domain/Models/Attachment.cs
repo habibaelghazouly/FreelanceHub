@@ -18,7 +18,7 @@ namespace FreelanceHub.Domain.Models
 
 		public long? FileSize { get; set; }
 
-		public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+		public DateTime UploadedAt { get; set; }
 
 		public ICollection<FreelancerProfileAttachment> FreelancerProfileAttachments { get; set; } = new List<FreelancerProfileAttachment>();
 

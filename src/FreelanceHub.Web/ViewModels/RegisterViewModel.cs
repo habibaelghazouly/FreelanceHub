@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using FreelanceHub.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 
 namespace FreelanceHub.Web.ViewModels
@@ -63,12 +64,11 @@ namespace FreelanceHub.Web.ViewModels
 
 		public string? Bio { get; set; }
 
-		[StringLength(30)]
 		[Display(Name = "Experience level")]
-		public string? ExperienceLevel { get; set; }
+		public FreelancerExperienceLevel? ExperienceLevel { get; set; }
 
 		[Display(Name = "Availability status")]
-		public int? AvailabilityStatus { get; set; }
+		public FreelancerAvailabilityStatus? AvailabilityStatus { get; set; }
 
 		[StringLength(500)]
 		[Display(Name = "Portfolio URL")]

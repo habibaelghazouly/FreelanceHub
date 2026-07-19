@@ -19,7 +19,7 @@ namespace FreelanceHub.Infrastructure.Configurations
 			builder.Property(attachment => attachment.FileUrl).HasColumnName("file_url").HasMaxLength(500).IsRequired();
 			builder.Property(attachment => attachment.ContentType).HasColumnName("content_type").HasMaxLength(100);
 			builder.Property(attachment => attachment.FileSize).HasColumnName("file_size");
-			builder.Property(attachment => attachment.UploadedAt).HasColumnName("uploaded_at").HasDefaultValueSql("SYSDATETIME()");
+			builder.Property(attachment => attachment.UploadedAt).HasColumnName("uploaded_at").HasDefaultValueSql("SYSUTCDATETIME()");
 
 			builder
 				.HasOne(attachment => attachment.UploadedByUser)

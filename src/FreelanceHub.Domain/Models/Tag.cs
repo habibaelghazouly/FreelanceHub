@@ -4,5 +4,7 @@ namespace FreelanceHub.Domain.Models
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;
+
+		public ICollection<JobTag> JobTags { get; set; } = new List<JobTag>();
     }
 }

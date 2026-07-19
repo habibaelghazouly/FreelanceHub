@@ -15,6 +15,8 @@ namespace FreelanceHub.Infrastructure.Configurations.Attachments
 			builder.Property(ja => ja.JobId).HasColumnName("job_id");
 			builder.Property(ja => ja.AttachmentId).HasColumnName("attachment_id");
 
+			builder.HasQueryFilter(ja => !ja.Job.IsDeleted);
+
 			builder.HasOne(ja => ja.Job)
 				.WithMany(job => job.JobAttachments)
 				.HasForeignKey(ja => ja.JobId)

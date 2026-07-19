@@ -15,6 +15,8 @@ namespace FreelanceHub.Infrastructure.Configurations.Skills
 			builder.Property(js => js.JobId).HasColumnName("job_id");
 			builder.Property(js => js.SkillId).HasColumnName("skill_id");
 
+			builder.HasQueryFilter(js => !js.Job.IsDeleted);
+
 			builder.HasOne(js => js.Job)
 				.WithMany(job => job.JobSkills)
 				.HasForeignKey(js => js.JobId)

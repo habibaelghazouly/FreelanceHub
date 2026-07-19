@@ -6,6 +6,7 @@ namespace FreelanceHub.Domain.Enums
         Draft = 60,
         Accepted = 61,
         Rejected = 62,
-        Terminated = 63
+        Terminated = 63,
+        Completed = 64
     }
 }

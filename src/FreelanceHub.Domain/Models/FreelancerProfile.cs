@@ -1,3 +1,5 @@
+using FreelanceHub.Domain.Enums;
+
 namespace FreelanceHub.Domain.Models
 {
 	public class FreelancerProfile
@@ -14,9 +16,9 @@ namespace FreelanceHub.Domain.Models
 
 		public string? Bio { get; set; }
 
-		public string? ExperienceLevel { get; set; }
+		public FreelancerExperienceLevel? ExperienceLevel { get; set; }
 
-		public int? AvailabilityStatus { get; set; }
+		public FreelancerAvailabilityStatus? AvailabilityStatus { get; set; }
 
 		public string? ExternalPortfolioUrl { get; set; }
 
@@ -24,9 +26,9 @@ namespace FreelanceHub.Domain.Models
 
 		public int RatingCount { get; set; }
 
-		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+		public DateTime CreatedAt { get; set; }
 
-		public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+		public DateTime UpdatedAt { get; set; }
 
 		public ICollection<Application> Applications { get; set; } = new List<Application>();
 

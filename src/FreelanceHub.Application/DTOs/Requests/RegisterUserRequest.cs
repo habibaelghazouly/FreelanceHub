@@ -1,3 +1,5 @@
+using FreelanceHub.Domain.Enums;
+
 namespace FreelanceHub.Application.DTOs.Requests
 {
 	public class RegisterUserRequest
@@ -28,9 +30,9 @@ namespace FreelanceHub.Application.DTOs.Requests
 
 		public string? Bio { get; set; }
 
-		public string? ExperienceLevel { get; set; }
+		public FreelancerExperienceLevel? ExperienceLevel { get; set; }
 
-		public int? AvailabilityStatus { get; set; }
+		public FreelancerAvailabilityStatus? AvailabilityStatus { get; set; }
 
 		public string? ExternalPortfolioUrl { get; set; }
 	}
