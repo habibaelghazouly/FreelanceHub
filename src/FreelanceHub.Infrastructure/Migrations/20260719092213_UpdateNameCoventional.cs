@@ -36,8 +36,28 @@ namespace FreelanceHub.Infrastructure.Migrations
                 name: "freelancer_user_id",
                 table: "applications",
                 type: "int",
+                nullable: true);
+
+            migrationBuilder.Sql(
+                """
+                UPDATE [application]
+                SET [freelancer_user_id] = [profile].[user_id]
+                FROM [applications] AS [application]
+                INNER JOIN [freelancer_profiles] AS [profile]
+                    ON [profile].[freelancer_profile_id] = [application].[FreelancerProfileId];
+
+                IF EXISTS (SELECT 1 FROM [applications] WHERE [freelancer_user_id] IS NULL)
+                    THROW 51000, 'Unable to map every application to a freelancer user.', 1;
+                """);
+
+            migrationBuilder.AlterColumn<int>(
+                name: "freelancer_user_id",
+                table: "applications",
+                type: "int",
                 nullable: false,
-                defaultValue: 0);
+                oldClrType: typeof(int),
+                oldType: "int",
+                oldNullable: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_applications_freelancer_user_id",
@@ -75,6 +95,18 @@ namespace FreelanceHub.Infrastructure.Migrations
                 name: "IX_applications_freelancer_user_id",
                 table: "applications");
 
+            migrationBuilder.Sql(
+                """
+                UPDATE [application]
+                SET [FreelancerProfileId] = [profile].[freelancer_profile_id]
+                FROM [applications] AS [application]
+                INNER JOIN [freelancer_profiles] AS [profile]
+                    ON [profile].[user_id] = [application].[freelancer_user_id];
+
+                IF EXISTS (SELECT 1 FROM [applications] WHERE [FreelancerProfileId] IS NULL)
+                    THROW 51000, 'Unable to map every application back to a freelancer profile.', 1;
+                """);
+
             migrationBuilder.DropColumn(
                 name: "freelancer_user_id",
                 table: "applications");
@@ -94,7 +126,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                 table: "applications",
                 type: "int",
                 nullable: false,
-                defaultValue: 0,
                 oldClrType: typeof(int),
                 oldType: "int",
                 oldNullable: true);
