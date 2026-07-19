@@ -25,8 +25,6 @@ namespace FreelanceHub.Application.Services.Implementations
             ".gif"
         };
 
-
-
         private static readonly HashSet<string> AllowedPortfolioContentTypes = new(StringComparer.OrdinalIgnoreCase)
         {
             "image/jpeg",
@@ -47,8 +45,6 @@ namespace FreelanceHub.Application.Services.Implementations
         };
 
         private const long MaxPortfolioFileSizeBytes = 10 * 1024 * 1024;
-
-
         private const long MaxImageSizeBytes = 2 * 1024 * 1024;
         private readonly IFileStorageRepository _fileStorageRepository;
 
@@ -103,21 +99,29 @@ namespace FreelanceHub.Application.Services.Implementations
                 throw new FileUploadException(maxFileSizeErrorMessage);
             }
 
-            var extension = Path.GetExtension(file.OriginalFileName);
-            if (!allowedExtensions.Contains(extension) || !allowedContentTypes.Contains(file.ContentType))
+            var originalFileName = Path.GetFileName(file.OriginalFileName);
+            if (originalFileName.Length > 255)
+            {
+                throw new FileUploadException("The filename must be 255 characters or fewer.");
+            }
+
+            var extension = Path.GetExtension(originalFileName);
+            if (!allowedExtensions.Contains(extension)
+                || !allowedContentTypes.Contains(file.ContentType)
+                || !IsExtensionCompatible(extension, file.ContentType))
             {
                 throw new FileUploadException(invalidTypeErrorMessage);
             }
 
             var result = await _fileStorageRepository.SaveAsync(
                 file.Content,
-                file.OriginalFileName,
+                originalFileName,
                 folderName,
                 cancellationToken);
 
             return new FileUploadResult
             {
-                OriginalFileName = Path.GetFileName(file.OriginalFileName),
+                OriginalFileName = originalFileName,
                 StoredFileName = result.StoredFileName,
                 FileUrl = result.FileUrl,
                 ContentType = file.ContentType,
@@ -130,6 +134,19 @@ namespace FreelanceHub.Application.Services.Implementations
         {
             return _fileStorageRepository.DeleteAsync(storageKey, cancellationToken);
         }
-    }
 
+        private static bool IsExtensionCompatible(string extension, string contentType)
+        {
+            return contentType.ToLowerInvariant() switch
+            {
+                "image/jpeg" => extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
+                    || extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase),
+                "image/png" => extension.Equals(".png", StringComparison.OrdinalIgnoreCase),
+                "image/webp" => extension.Equals(".webp", StringComparison.OrdinalIgnoreCase),
+                "image/gif" => extension.Equals(".gif", StringComparison.OrdinalIgnoreCase),
+                "application/pdf" => extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase),
+                _ => false
+            };
+        }
+    }
 }

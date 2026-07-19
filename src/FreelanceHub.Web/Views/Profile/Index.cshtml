@@ -8,6 +8,7 @@
 
 @{
     ViewData["Title"] = "Profile";
+    ViewData["MainContainerClass"] = "container-fluid px-3 px-lg-4";
 
     var firstInitial = string.IsNullOrWhiteSpace(Model.FirstName) ? string.Empty : Model.FirstName[..1];
     var lastInitial = string.IsNullOrWhiteSpace(Model.LastName) ? string.Empty : Model.LastName[..1];
@@ -15,6 +16,7 @@
 
     var hasCompanyWebsite = Uri.TryCreate(Model.CompanyWebsite, UriKind.Absolute, out var companyWebsiteUri)
         && (companyWebsiteUri.Scheme == Uri.UriSchemeHttp || companyWebsiteUri.Scheme == Uri.UriSchemeHttps);
+
     var hasPortfolioUrl = Uri.TryCreate(Model.ExternalPortfolioUrl, UriKind.Absolute, out var portfolioUri)
         && (portfolioUri.Scheme == Uri.UriSchemeHttp || portfolioUri.Scheme == Uri.UriSchemeHttps);
     var hasRating = Model.RatingCount > 0;
@@ -33,11 +35,14 @@
         FreelancerAvailabilityStatus.Unavailable => "is-unavailable",
         _ => string.Empty
     };
+    var isCompanyClient = Model.Role == "Client" && Model.ClientType == ClientType.Company;
     var profileSummary = Model.Role == "Freelancer"
         ? Model.ProfessionalTitle
-        : Model.Role == "Client"
+        : isCompanyClient
             ? Model.CompanyName
-            : "Account member";
+            : Model.Role == "Client"
+                ? "Individual client"
+                : "Account member";
 }
 
 <div class="profile-page py-4 py-lg-5">
@@ -48,6 +53,15 @@
         </div>
         <a class="profile-back-link" asp-controller="Home" asp-action="Index">Back to home</a>
     </header>
+
+    @if (TempData["ProfilePhotoSuccess"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+    @if (TempData["ProfilePhotoError"] is string errorMessage)
+    {
+        <div class="alert alert-danger" role="alert">@errorMessage</div>
+    }
 
     <section class="profile-hero">
         <div class="profile-hero-content">
@@ -62,6 +76,19 @@
                         @initials
                     </div>
                 }
+
+                <form id="profile-photo-form" class="profile-photo-form" asp-controller="Profile"
+                      asp-action="UpdatePhoto" method="post" enctype="multipart/form-data">
+                    <input id="profile-photo-input" class="visually-hidden" type="file" name="profileImage"
+                           accept="image/jpeg,image/png,image/webp,image/gif" />
+                    <button id="profile-photo-button" class="profile-photo-button" type="button"
+                            title="JPG, PNG, WEBP, or GIF up to 2 MB">Update photo</button>
+                    <noscript>
+                        <input type="file" name="profileImage" accept="image/jpeg,image/png,image/webp,image/gif"
+                               required />
+                        <button class="profile-photo-button" type="submit">Save photo</button>
+                    </noscript>
+                </form>
             </div>
 
             <div class="profile-identity">
@@ -92,8 +119,8 @@
         </div>
     </section>
 
-    <div class="row g-4 mt-1 align-items-start">
-        <div class="col-lg-8">
+    <div class="row g-4 g-xl-5 mt-1 align-items-start">
+        <div class="col-lg-8 col-xl-9">
             @if (Model.Role == "Freelancer")
             {
                 <section class="profile-panel mb-4">
@@ -141,43 +168,42 @@
                         </div>
                     </div>
 
-                    @if (hasPortfolioUrl)
-                    {
-                        <a class="profile-link" href="@(portfolioUri!.AbsoluteUri)" target="_blank" rel="noopener noreferrer">Visit external portfolio</a>
-                    }
                 </section>
             }
             else if (Model.Role == "Client")
             {
                 <section class="profile-panel mb-4">
-                    <div class="company-heading">
-                        @if (!string.IsNullOrWhiteSpace(Model.CompanyLogoUrl))
-                        {
-                            <img src="@Model.CompanyLogoUrl" alt="@Model.CompanyName logo" class="company-logo" />
-                        }
-                        else
-                        {
-                            <div class="company-logo company-logo-fallback" aria-hidden="true">
-                                @(string.IsNullOrWhiteSpace(Model.CompanyName) ? "C" : Model.CompanyName[..1].ToUpperInvariant())
-                            </div>
-                        }
-
-                        <div>
-                            <span class="profile-kicker">Client profile</span>
-                            <h2>@(Model.CompanyName ?? "Company details")</h2>
-                        </div>
-                    </div>
-
-                    @if (string.IsNullOrWhiteSpace(Model.CompanyDescription))
+                    @if (isCompanyClient)
                     {
-                        <div class="profile-empty-state">
-                            <strong>Company story coming soon</strong>
-                            <span>This client has not added a company description yet.</span>
+                        <div class="company-heading">
+                            @if (!string.IsNullOrWhiteSpace(Model.CompanyLogoUrl))
+                            {
+                                <img src="@Model.CompanyLogoUrl" alt="@Model.CompanyName logo" class="company-logo" />
+                            }
+                            else
+                            {
+                                <div class="company-logo company-logo-fallback" aria-hidden="true">
+                                    @(string.IsNullOrWhiteSpace(Model.CompanyName) ? "C" : Model.CompanyName[..1].ToUpperInvariant())
+                                </div>
+                            }
+
+                            <div>
+                                <span class="profile-kicker">Company client</span>
+                                <h2>@Model.CompanyName</h2>
+                            </div>
                         </div>
+
+                        <p class="profile-description">@Model.CompanyDescription</p>
                     }
                     else
                     {
-                        <p class="profile-description">@Model.CompanyDescription</p>
+                        <div class="profile-panel-heading">
+                            <div>
+                                <span class="profile-kicker">Client profile</span>
+                                <h2>Individual client</h2>
+                            </div>
+                        </div>
+
                     }
 
                     <div class="profile-facts profile-facts-client">
@@ -188,17 +214,21 @@
                                 <small>@(hasRating ? $"out of 5 from {Model.RatingCount} reviews" : "No reviews yet")</small>
                             </div>
                         </div>
-                        <div class="profile-fact">
-                            <span>Website</span>
-                            @if (hasCompanyWebsite)
-                            {
-                                <a href="@(companyWebsiteUri!.AbsoluteUri)" target="_blank" rel="noopener noreferrer">@(companyWebsiteUri!.Host)</a>
-                            }
-                            else
-                            {
-                                <strong>Not specified</strong>
-                            }
-                        </div>
+                        @if (isCompanyClient)
+                        {
+                            <div class="profile-fact">
+                                <span>Website</span>
+                                @if (hasCompanyWebsite)
+                                {
+                                    <a href="@(companyWebsiteUri!.AbsoluteUri)" target="_blank"
+                                       rel="noopener noreferrer">@(companyWebsiteUri!.Host)</a>
+                                }
+                                else
+                                {
+                                    <strong>Not specified</strong>
+                                }
+                            </div>
+                        }
                     </div>
                 </section>
             }
@@ -207,12 +237,13 @@
                 <section class="profile-panel mb-4">
                     <span class="profile-kicker">Account profile</span>
                     <h2>@Model.FirstName @Model.LastName</h2>
-                    <p class="profile-description mb-0">Role-specific profile details are not available for this account.</p>
+                    <p class="profile-description mb-0">Role-specific profile details are not available for this account.
+                    </p>
                 </section>
             }
         </div>
 
-        <div class="col-lg-4 profile-sidebar">
+        <div class="col-lg-4 col-xl-3 profile-sidebar">
             <aside class="profile-panel profile-contact">
                 <span class="profile-kicker">Account details</span>
                 <h2>Contact</h2>
@@ -240,13 +271,32 @@
 
                 @if (hasPortfolioUrl)
                 {
-                    <a class="profile-secondary-link" href="@(portfolioUri!.AbsoluteUri)" target="_blank" rel="noopener noreferrer">External portfolio</a>
+                    <a class="profile-secondary-link" href="@(portfolioUri!.AbsoluteUri)" target="_blank"
+                       rel="noopener noreferrer">External portfolio</a>
                 }
-                else if (hasCompanyWebsite)
+                else if (isCompanyClient && hasCompanyWebsite)
                 {
-                    <a class="profile-secondary-link" href="@(companyWebsiteUri!.AbsoluteUri)" target="_blank" rel="noopener noreferrer">Company website</a>
+                    <a class="profile-secondary-link" href="@(companyWebsiteUri!.AbsoluteUri)" target="_blank"
+                       rel="noopener noreferrer">Company website</a>
                 }
             </aside>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById("profile-photo-form");
+            const input = document.getElementById("profile-photo-input");
+            const button = document.getElementById("profile-photo-button");
+
+            button.addEventListener("click", () => input.click());
+            input.addEventListener("change", () => {
+                if (input.files.length > 0) {
+                    form.requestSubmit();
+                }
+            });
+        })();
+    </script>
+}

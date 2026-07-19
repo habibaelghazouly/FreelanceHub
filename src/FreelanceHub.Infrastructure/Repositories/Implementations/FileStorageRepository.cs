@@ -54,7 +54,7 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 				}
 				catch
 				{
-					// Preserve the upload failure when best-effort cleanup also fails , IS there a btter solution here? 
+					// Preserve the original upload failure if cleanup also fails.
 				}
 
 				throw;

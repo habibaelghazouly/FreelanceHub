@@ -9,6 +9,8 @@ namespace FreelanceHub.Web.Controllers
 {
 	public class AccountController : Controller
 	{
+		private const long MaxRegistrationRequestSize = 2_228_224;
+
 		private readonly IApplicationUserService _applicationUserService;
 
 		public AccountController(IApplicationUserService applicationUserService)
@@ -32,6 +34,8 @@ namespace FreelanceHub.Web.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
+		[RequestFormLimits(MultipartBodyLengthLimit = MaxRegistrationRequestSize)]
+		[RequestSizeLimit(MaxRegistrationRequestSize)]
 		public async Task<IActionResult> RegisterClient(RegisterClientViewModel model, string? returnUrl = null)
 		{
 			ViewData["ReturnUrl"] = returnUrl;
@@ -76,6 +80,8 @@ namespace FreelanceHub.Web.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
+		[RequestFormLimits(MultipartBodyLengthLimit = MaxRegistrationRequestSize)]
+		[RequestSizeLimit(MaxRegistrationRequestSize)]
 		public async Task<IActionResult> RegisterFreelancer(RegisterFreelancerViewModel model, string? returnUrl = null)
 		{
 			ViewData["ReturnUrl"] = returnUrl;

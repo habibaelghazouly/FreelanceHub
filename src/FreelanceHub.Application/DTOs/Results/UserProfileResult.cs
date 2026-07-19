@@ -20,6 +20,8 @@ namespace FreelanceHub.Application.DTOs.Results
 
 		public DateTime JoinedAt { get; set; }
 
+		public ClientType? ClientType { get; set; }
+
 		public string? CompanyName { get; set; }
 
 		public string? CompanyDescription { get; set; }
