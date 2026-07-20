@@ -41,9 +41,23 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 				content.Position = 0;
 			}
 
-			await using (var stream = File.Create(physicalPath))
+			try
 			{
+				await using var stream = File.Create(physicalPath);
 				await content.CopyToAsync(stream, cancellationToken);
+			}
+			catch
+			{
+				try
+				{
+					File.Delete(physicalPath);
+				}
+				catch
+				{
+					// Preserve the upload failure when best-effort cleanup also fails , IS there a btter solution here? 
+				}
+
+				throw;
 			}
 
 			return (storedFileName, $"/{storageKey}", storageKey);

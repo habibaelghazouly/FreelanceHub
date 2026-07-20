@@ -10,3 +10,6 @@
 # User-specific files
 *.user
 *.suo
+
+# Runtime uploads
+src/FreelanceHub.Web/wwwroot/uploads/

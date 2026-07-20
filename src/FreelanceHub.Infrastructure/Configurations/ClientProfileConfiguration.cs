@@ -1,3 +1,4 @@
+using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,13 +9,20 @@ namespace FreelanceHub.Infrastructure.Configurations
 	{
 		public void Configure(EntityTypeBuilder<ClientProfile> builder)
 		{
-			builder.ToTable("client_profiles");
+			builder.ToTable("client_profiles", table =>
+			{
+				table.HasCheckConstraint("chk_client_profiles_type", "[client_type] IN (70, 71)");
+				table.HasCheckConstraint(
+					"chk_client_profiles_company_details",
+					"[client_type] = 70 OR ([client_type] = 71 AND NULLIF(LTRIM(RTRIM([company_name])), '') IS NOT NULL AND NULLIF(LTRIM(RTRIM([company_description])), '') IS NOT NULL)");
+			});
 			builder.HasKey(profile => profile.ClientProfileId);
 
 			builder.Property(profile => profile.ClientProfileId).HasColumnName("client_profile_id");
 			builder.Property(profile => profile.UserId).HasColumnName("user_id");
+			builder.Property(profile => profile.ClientType).HasColumnName("client_type").HasConversion<int>().IsRequired();
 			builder.Property(profile => profile.CompanyName).HasColumnName("company_name").HasMaxLength(150);
-			builder.Property(profile => profile.CompanyDescription).HasColumnName("company_description");
+			builder.Property(profile => profile.CompanyDescription).HasColumnName("company_description").HasMaxLength(2000);
 			builder.Property(profile => profile.CompanyWebsite).HasColumnName("company_website").HasMaxLength(500);
 			builder.Property(profile => profile.CompanyLogoAttachmentId).HasColumnName("company_logo_attachment_id");
 			builder.Property(profile => profile.RatingAverage).HasColumnName("rating_averge").HasDefaultValue(0);
