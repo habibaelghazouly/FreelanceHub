@@ -9,6 +9,7 @@ namespace FreelanceHub.Domain.Models
 
             // FK
             public int ClientUserId { get; set; }
+        public int? CategoryId { get; set; }
            
             public string Title { get; set; } = null!;
             public string Description { get; set; } = null!;
@@ -24,6 +25,7 @@ namespace FreelanceHub.Domain.Models
         // Navigation properties
 
         public ApplicationUser ClientUser { get; set; } = null!;
+        public Category? Category { get; set; }
         public Contract? Contract { get; set; }
         //public ICollection<JobCategory> JobCategories { get; set; } = new List<JobCategory>();
         //public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();

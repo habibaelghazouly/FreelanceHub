@@ -14,6 +14,7 @@ namespace FreelanceHub.Infrastructure.Configurations
 
             builder.Property(job => job.JobId).HasColumnName("job_id");
             builder.Property(job => job.ClientUserId).HasColumnName("client_user_id").IsRequired();
+            builder.Property(job => job.CategoryId).HasColumnName("category_id");
             builder.Property(job => job.Title).HasColumnName("title").HasMaxLength(200).IsRequired();
             builder.Property(job => job.Description).HasColumnName("description").IsRequired();
             builder.Property(job => job.Budget).HasColumnName("budget").HasPrecision(18, 2).IsRequired();
@@ -29,6 +30,12 @@ namespace FreelanceHub.Infrastructure.Configurations
                 .WithMany(user => user.Jobs)
                 .HasForeignKey(job => job.ClientUserId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasOne(job => job.Category)
+                .WithMany(category => category.Jobs)
+                .HasForeignKey(job => job.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder
                 .HasOne(job => job.Contract)
