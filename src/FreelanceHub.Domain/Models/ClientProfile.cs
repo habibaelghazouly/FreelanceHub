@@ -1,3 +1,5 @@
+using FreelanceHub.Domain.Enums;
+
 namespace FreelanceHub.Domain.Models
 {
 	public class ClientProfile
@@ -7,6 +9,8 @@ namespace FreelanceHub.Domain.Models
 		public int UserId { get; set; }
 
 		public ApplicationUser User { get; set; } = null!;
+
+		public ClientType ClientType { get; set; }
 
 		public string? CompanyName { get; set; }
 

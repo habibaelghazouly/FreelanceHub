@@ -20,12 +20,19 @@ namespace FreelanceHub.Web.Controllers
 		public IActionResult Register(string? returnUrl = null)
 		{
 			ViewData["ReturnUrl"] = returnUrl;
-			return View(new RegisterViewModel());
+			return View();
+		}
+
+		[HttpGet]
+		public IActionResult RegisterClient(string? returnUrl = null)
+		{
+			ViewData["ReturnUrl"] = returnUrl;
+			return View(new RegisterClientViewModel());
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
+		public async Task<IActionResult> RegisterClient(RegisterClientViewModel model, string? returnUrl = null)
 		{
 			ViewData["ReturnUrl"] = returnUrl;
 
@@ -38,7 +45,60 @@ namespace FreelanceHub.Web.Controllers
 			try
 			{
 				profileImageStream = model.ProfileImage?.OpenReadStream();
-				var result = await _applicationUserService.RegisterAsync(ToRegisterUserRequest(model, profileImageStream), HttpContext.RequestAborted);
+				var request = PopulateAccountRequest(new RegisterClientRequest
+				{
+					ClientType = model.ClientType!.Value,
+					CompanyName = model.CompanyName,
+					CompanyDescription = model.CompanyDescription,
+					CompanyWebsite = model.CompanyWebsite
+				}, model, profileImageStream);
+				var result = await _applicationUserService.RegisterClientAsync(request, HttpContext.RequestAborted);
+				if (!result.Succeeded)
+				{
+					AddErrors(result);
+					return View(model);
+				}
+
+				return RedirectToLocal(returnUrl);
+			}
+			finally
+			{
+				profileImageStream?.Dispose();
+			}
+		}
+
+		[HttpGet]
+		public IActionResult RegisterFreelancer(string? returnUrl = null)
+		{
+			ViewData["ReturnUrl"] = returnUrl;
+			return View(new RegisterFreelancerViewModel());
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> RegisterFreelancer(RegisterFreelancerViewModel model, string? returnUrl = null)
+		{
+			ViewData["ReturnUrl"] = returnUrl;
+
+			if (!ModelState.IsValid)
+			{
+				return View(model);
+			}
+
+			Stream? profileImageStream = null;
+			try
+			{
+				profileImageStream = model.ProfileImage?.OpenReadStream();
+				var request = PopulateAccountRequest(new RegisterFreelancerRequest
+				{
+					ProfessionalTitle = model.ProfessionalTitle,
+					HourlyRate = model.HourlyRate!.Value,
+					Bio = model.Bio,
+					ExperienceLevel = model.ExperienceLevel!.Value,
+					AvailabilityStatus = model.AvailabilityStatus!.Value,
+					ExternalPortfolioUrl = model.ExternalPortfolioUrl
+				}, model, profileImageStream);
+				var result = await _applicationUserService.RegisterFreelancerAsync(request, HttpContext.RequestAborted);
 				if (!result.Succeeded)
 				{
 					AddErrors(result);
@@ -113,33 +173,26 @@ namespace FreelanceHub.Web.Controllers
 			return RedirectToAction("Index", "Home");
 		}
 
-		private static RegisterUserRequest ToRegisterUserRequest(RegisterViewModel model, Stream? profileImageStream)
+		private static TRequest PopulateAccountRequest<TRequest>(
+			TRequest request,
+			RegisterAccountViewModel model,
+			Stream? profileImageStream)
+			where TRequest : RegisterAccountRequest
 		{
-			return new RegisterUserRequest
-			{
-				Username = model.Username,
-				Email = model.Email,
-				FirstName = model.FirstName,
-				LastName = model.LastName,
-				Password = model.Password,
-				Role = model.Role,
-				ProfileImage = model.ProfileImage is null || profileImageStream is null
-					? null
-					: new UploadedFileRequest(
-						profileImageStream,
-						model.ProfileImage.FileName,
-						model.ProfileImage.ContentType,
-						model.ProfileImage.Length),
-				CompanyName = model.CompanyName,
-				CompanyDescription = model.CompanyDescription,
-				CompanyWebsite = model.CompanyWebsite,
-				ProfessionalTitle = model.ProfessionalTitle,
-				HourlyRate = model.HourlyRate,
-				Bio = model.Bio,
-				ExperienceLevel = model.ExperienceLevel,
-				AvailabilityStatus = model.AvailabilityStatus,
-				ExternalPortfolioUrl = model.ExternalPortfolioUrl
-			};
+			request.Username = model.Username;
+			request.Email = model.Email;
+			request.FirstName = model.FirstName;
+			request.LastName = model.LastName;
+			request.Password = model.Password;
+			request.ProfileImage = model.ProfileImage is null || profileImageStream is null
+				? null
+				: new UploadedFileRequest(
+					profileImageStream,
+					model.ProfileImage.FileName,
+					model.ProfileImage.ContentType,
+					model.ProfileImage.Length);
+
+			return request;
 		}
 
 		private void AddErrors(ApplicationUserServiceResult result)

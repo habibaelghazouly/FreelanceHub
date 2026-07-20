@@ -10,15 +10,15 @@ namespace FreelanceHub.Domain.Models
 
 		public ApplicationUser User { get; set; } = null!;
 
-		public string? ProfessionalTitle { get; set; }
+		public string ProfessionalTitle { get; set; } = string.Empty;
 
-		public decimal? HourlyRate { get; set; }
+		public decimal HourlyRate { get; set; }
 
-		public string? Bio { get; set; }
+		public string Bio { get; set; } = string.Empty;
 
-		public FreelancerExperienceLevel? ExperienceLevel { get; set; }
+		public FreelancerExperienceLevel ExperienceLevel { get; set; }
 
-		public FreelancerAvailabilityStatus? AvailabilityStatus { get; set; }
+		public FreelancerAvailabilityStatus AvailabilityStatus { get; set; }
 
 		public string? ExternalPortfolioUrl { get; set; }
 
