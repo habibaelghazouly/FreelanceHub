@@ -60,7 +60,10 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
 			builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
 
-			var app = builder.Build();
+            builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
+            builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+
+            var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
 			if (!app.Environment.IsDevelopment())
