@@ -1,0 +1,6 @@
+<div><h1>Jobs</h1></div>
+@if (User.Identity?.IsAuthenticated == true && User.IsInRole("Client"))
+{
+    <a asp-action="Create" class="btn btn-primary">Create New Job</a>
+}
+</div>
