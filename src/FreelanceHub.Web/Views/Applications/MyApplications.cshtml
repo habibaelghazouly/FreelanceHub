@@ -1,0 +1,69 @@
+﻿@model FreelancerApplicationDashboardViewModel
+
+@{
+    ViewData["Title"] = "My Applications";
+
+    static string FormatStatus(FreelanceHub.Domain.Enums.ApplicationStatus status) => status switch
+    {
+        FreelanceHub.Domain.Enums.ApplicationStatus.UnderReview => "Under Review",
+        _ => status.ToString()
+    };
+}
+
+<h1 class="mb-4">My Applications</h1>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="mb-4">
+    <a asp-action="Submit" class="btn btn-primary">Submit New Proposal</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                Application Status Tracking
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Applications.Count == 0)
+                {
+                    <p class="p-3 mb-0">No applications submitted yet.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Job</th>
+                                    <th>Bid</th>
+                                    <th>Timeline</th>
+                                    <th>Status</th>
+                                    <th>Portfolio</th>
+                                    <th>Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var application in Model.Applications)
+                                {
+                                    <tr>
+                                        <td>@application.JobTitle (#@application.JobId)</td>
+                                        <td>@application.ProposedAmount.ToString("C")</td>
+                                        <td>@application.TimelineDays days</td>
+                                        <td>@FormatStatus(application.ApplicationStatus)</td>
+                                        <td>@application.PortfolioItemCount file(s)</td>
+                                        <td>@application.SubmittedAt.ToLocalTime().ToString("g")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
