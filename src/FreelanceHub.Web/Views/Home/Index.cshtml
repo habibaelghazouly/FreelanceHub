@@ -4,5 +4,13 @@
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <p>Manage projects, proposals, and collaborations in one place.</p>
+    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Freelancer"))
+    {
+        <a class="btn btn-primary" asp-controller="Applications" asp-action="MyApplications">Go to My Applications</a>
+    }
+    else if (User.Identity?.IsAuthenticated == true && User.IsInRole("Client"))
+    {
+        <a class="btn btn-primary" asp-controller="Applications" asp-action="Review">Review Applications</a>
+    }
 </div>

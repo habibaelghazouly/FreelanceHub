@@ -1,0 +1,55 @@
+﻿@model SubmitApplicationViewModel
+
+@{
+    ViewData["Title"] = "Submit Application";
+}
+
+<h1 class="mb-4">Submit Application</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Submit" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="JobId" class="form-label"></label>
+                <input asp-for="JobId" class="form-control" />
+                <span asp-validation-for="JobId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ProposedAmount" class="form-label"></label>
+                <input asp-for="ProposedAmount" class="form-control" />
+                <span asp-validation-for="ProposedAmount" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TimelineDays" class="form-label"></label>
+                <input asp-for="TimelineDays" class="form-control" />
+                <span asp-validation-for="TimelineDays" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CoverLetter" class="form-label"></label>
+                <textarea asp-for="CoverLetter" class="form-control" rows="7"></textarea>
+                <span asp-validation-for="CoverLetter" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PortfolioFiles" class="form-label"></label>
+                <input asp-for="PortfolioFiles" class="form-control" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" />
+                <span asp-validation-for="PortfolioFiles" class="text-danger"></span>
+                <div class="form-text">Upload up to 10 files. Allowed types: PDF, JPG, PNG, GIF, WEBP. Maximum size: 10 MB per file.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Submit Proposal</button>
+                <a asp-action="MyApplications" class="btn btn-outline-secondary">Back to My Applications</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
