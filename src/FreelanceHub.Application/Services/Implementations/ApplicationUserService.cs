@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Exceptions;
@@ -155,6 +156,132 @@ namespace FreelanceHub.Application.Services.Implementations
 				cancellationToken);
 		}
 
+		public async Task<AccountDetailsResult?> GetAccountDetailsAsync(int userId)
+		{
+			var user = await _userManager.FindByIdAsync(userId.ToString());
+			if (user is null)
+			{
+				return null;
+			}
+
+			return new AccountDetailsResult
+			{
+				Username = user.UserName ?? string.Empty,
+				FirstName = user.FirstName,
+				LastName = user.LastName,
+				Email = user.Email ?? string.Empty,
+				IsEmailConfirmed = user.EmailConfirmed
+			};
+		}
+
+		public async Task<UpdateOperationResult> UpdateAccountDetailsAsync(int userId, UpdateAccountDetailsRequest request)
+		{
+			var firstName = request.FirstName?.Trim() ?? string.Empty;
+			var lastName = request.LastName?.Trim() ?? string.Empty;
+			var email = request.Email?.Trim() ?? string.Empty;
+			var errors = new List<UpdateOperationError>();
+
+			if (firstName.Length is < 1 or > 100)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.FirstName), "First name is required and cannot exceed 100 characters."));
+			}
+
+			if (lastName.Length is < 1 or > 100)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.LastName), "Last name is required and cannot exceed 100 characters."));
+			}
+
+			if (email.Length is < 1 or > 255 || !new EmailAddressAttribute().IsValid(email))
+			{
+				errors.Add(new UpdateOperationError(nameof(request.Email), "Enter a valid email address of at most 255 characters."));
+			}
+
+			if (errors.Count > 0)
+			{
+				return UpdateOperationResult.Failed(errors.ToArray());
+			}
+
+			var user = await _userManager.FindByIdAsync(userId.ToString());
+			if (user is null)
+			{
+				return UpdateOperationResult.Missing();
+			}
+
+			var mailboxChanged = !string.Equals(
+				_userManager.NormalizeEmail(user.Email),
+				_userManager.NormalizeEmail(email),
+				StringComparison.Ordinal);
+			var emailChanged = !string.Equals(user.Email, email, StringComparison.Ordinal);
+
+			if (emailChanged)
+			{
+				if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+				{
+					return UpdateOperationResult.Failed(new UpdateOperationError(
+						nameof(request.CurrentPassword),
+						"Current password is required to change your email."));
+				}
+
+				if (!await _userManager.CheckPasswordAsync(user, request.CurrentPassword))
+				{
+					return UpdateOperationResult.Failed(new UpdateOperationError(
+						nameof(request.CurrentPassword),
+						"Current password is incorrect."));
+				}
+			}
+
+			user.FirstName = firstName;
+			user.LastName = lastName;
+			user.UpdatedAt = DateTime.UtcNow;
+
+			IdentityResult result;
+			if (mailboxChanged)
+			{
+				result = await _userManager.SetEmailAsync(user, email);
+			}
+			else
+			{
+				if (emailChanged)
+				{
+					user.Email = email;
+				}
+
+				result = await _userManager.UpdateAsync(user);
+			}
+
+			if (!result.Succeeded)
+			{
+				return UpdateOperationResult.Failed(result.Errors.Select(MapAccountIdentityError).ToArray());
+			}
+
+			await _signInManager.RefreshSignInAsync(user);
+			return UpdateOperationResult.Success();
+		}
+
+		public async Task<UpdateOperationResult> ChangePasswordAsync(int userId, ChangePasswordRequest request)
+		{
+			if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+			{
+				return UpdateOperationResult.Failed(new UpdateOperationError(null, "Current and new passwords are required."));
+			}
+
+			var user = await _userManager.FindByIdAsync(userId.ToString());
+			if (user is null)
+			{
+				return UpdateOperationResult.Missing();
+			}
+
+			user.UpdatedAt = DateTime.UtcNow;
+			var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+			if (!result.Succeeded)
+			{
+				return UpdateOperationResult.Failed(result.Errors.Select(MapPasswordIdentityError).ToArray());
+			}
+
+			await _signInManager.RefreshSignInAsync(user);
+			return UpdateOperationResult.Success();
+		}
+
 		private async Task<ApplicationUserServiceResult> RegisterAsync(
 			RegisterAccountRequest request,
 			string role,
@@ -210,7 +337,7 @@ namespace FreelanceHub.Application.Services.Implementations
 					if (!updateResult.Succeeded)
 					{
 						await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-						await _fileUploadService.DeleteAsync(profileImageUpload.StorageKey, cancellationToken);
+						await _fileUploadService.DeleteAsync(profileImageUpload.StorageKey);
 						return ApplicationUserServiceResult.Failed(updateResult.Errors);
 					}
 				}
@@ -230,7 +357,7 @@ namespace FreelanceHub.Application.Services.Implementations
 				{
 					if (profileImageUpload is not null)
 					{
-						await _fileUploadService.DeleteAsync(profileImageUpload.StorageKey, CancellationToken.None);
+						await _fileUploadService.DeleteAsync(profileImageUpload.StorageKey);
 					}
 				}
 
@@ -246,7 +373,7 @@ namespace FreelanceHub.Application.Services.Implementations
 				{
 					if (profileImageUpload is not null)
 					{
-						await _fileUploadService.DeleteAsync(profileImageUpload.StorageKey, CancellationToken.None);
+						await _fileUploadService.DeleteAsync(profileImageUpload.StorageKey);
 					}
 				}
 
@@ -309,6 +436,25 @@ namespace FreelanceHub.Application.Services.Implementations
 		{
 			return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 		}
+
+		private static UpdateOperationError MapAccountIdentityError(IdentityError error)
+		{
+			var fieldName = error.Code.Contains("Email", StringComparison.OrdinalIgnoreCase)
+				? nameof(UpdateAccountDetailsRequest.Email)
+				: null;
+
+			return new UpdateOperationError(fieldName, error.Description);
+		}
+
+		private static UpdateOperationError MapPasswordIdentityError(IdentityError error)
+		{
+			var fieldName = error.Code == nameof(IdentityErrorDescriber.PasswordMismatch)
+				? nameof(ChangePasswordRequest.CurrentPassword)
+				: nameof(ChangePasswordRequest.NewPassword);
+
+			return new UpdateOperationError(fieldName, error.Description);
+		}
+
 
 		public async Task<ApplicationUserServiceResult> LoginAsync(LoginRequest request)
 		{
