@@ -56,19 +56,38 @@
                 @foreach (var job in Model.Jobs)
                 {
                     <div class="col">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <h5 class="card-title">@job.Title</h5>
-                                    <span class="badge bg-success">$@job.Budget.ToString("N0")</span>
+                        <!-- Added a clickable anchor wrapping the card with transition classes -->
+                        <a href="#" onclick="alert('Clicked on job: @job.Title'); return false;" class="text-decoration-none text-dark d-block h-100 job-card-link">
+                            <div class="card h-100 shadow-sm transition-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title">@job.Title</h5>
+                                        <span class="badge bg-success">$@job.Budget.ToString("N0")</span>
+                                    </div>
+                                    <p class="card-text text-muted">@job.Description</p>
+                                    <div class="small text-muted">Posted @job.CreatedAt.ToString("MMM dd, yyyy")</div>
                                 </div>
-                                <p class="card-text text-muted">@job.Description</p>
-                                <div class="small text-muted">Posted @job.CreatedAt.ToString("MMM dd, yyyy")</div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 }
             </div>
+
+            <style>
+                .transition-card {
+                    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+                }
+                
+                .job-card-link:hover .transition-card {
+                    transform: translateY(-4px) scale(1.01);
+                    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+                    background-color: #d3e6f9 !important; /* Slightly darker shade on hover */
+                }
+                
+                .job-card-link:hover .transition-card .card-title {
+                    color: #0d6efd;
+                }
+            </style>
 
             var totalPages = Math.Max(1, (int)Math.Ceiling(Model.TotalCount / (double)Math.Max(Model.PageSize, 1)));
             var currentPage = Math.Max(1, Model.PageNumber);
