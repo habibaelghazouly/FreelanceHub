@@ -1,6 +1,7 @@
 using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
+using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using Microsoft.AspNetCore.Identity;
@@ -78,6 +79,114 @@ namespace FreelanceHub.Application.Services.Implementations
 				RatingAverage = clientProfile?.RatingAverage ?? freelancerProfile?.RatingAverage ?? 0,
 				RatingCount = clientProfile?.RatingCount ?? freelancerProfile?.RatingCount ?? 0
 			};
+		}
+
+		public async Task<UpdateOperationResult> UpdateCompanyProfileAsync(
+			int userId,
+			UpdateCompanyProfileRequest request,
+			CancellationToken cancellationToken = default)
+		{
+			var companyName = request.CompanyName?.Trim() ?? string.Empty;
+			var companyDescription = request.CompanyDescription?.Trim() ?? string.Empty;
+			var companyWebsite = NormalizeOptional(request.CompanyWebsite);
+			var errors = new List<UpdateOperationError>();
+
+			if (companyName.Length is < 1 or > 150)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.CompanyName), "Company name is required and cannot exceed 150 characters."));
+			}
+
+			if (companyDescription.Length is < 1 or > 2000)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.CompanyDescription), "Company description is required and cannot exceed 2000 characters."));
+			}
+
+			ValidateOptionalUrl(companyWebsite, nameof(request.CompanyWebsite), "Company website", errors);
+
+			if (errors.Count > 0)
+			{
+				return UpdateOperationResult.Failed(errors.ToArray());
+			}
+
+			var user = await _applicationUserRepository.GetWithProfileForUpdateAsync(userId, cancellationToken);
+			var profile = user?.ClientProfile;
+			if (profile is null || profile.ClientType != ClientType.Company)
+			{
+				return UpdateOperationResult.Missing();
+			}
+
+			profile.CompanyName = companyName;
+			profile.CompanyDescription = companyDescription;
+			profile.CompanyWebsite = companyWebsite;
+			profile.UpdatedAt = DateTime.UtcNow;
+
+			await _unitOfWork.SaveChangesAsync(cancellationToken);
+			return UpdateOperationResult.Success();
+		}
+
+		public async Task<UpdateOperationResult> UpdateFreelancerProfileAsync(
+			int userId,
+			UpdateFreelancerProfileRequest request,
+			CancellationToken cancellationToken = default)
+		{
+			var professionalTitle = request.ProfessionalTitle?.Trim() ?? string.Empty;
+			var bio = request.Bio?.Trim() ?? string.Empty;
+			var portfolioUrl = NormalizeOptional(request.ExternalPortfolioUrl);
+			var errors = new List<UpdateOperationError>();
+
+			if (professionalTitle.Length is < 1 or > 150)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.ProfessionalTitle), "Professional title is required and cannot exceed 150 characters."));
+			}
+
+			if (request.HourlyRate < 0.01m || request.HourlyRate > 9999999999999999.99m)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.HourlyRate), "Hourly rate must be between 0.01 and 9999999999999999.99."));
+			}
+			else if (decimal.Round(request.HourlyRate, 2) != request.HourlyRate)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.HourlyRate), "Hourly rate cannot have more than two decimal places."));
+			}
+
+			if (bio.Length is < 20 or > 2000)
+			{
+				errors.Add(new UpdateOperationError(nameof(request.Bio), "Bio must be between 20 and 2000 characters."));
+			}
+
+			if (!Enum.IsDefined(request.ExperienceLevel))
+			{
+				errors.Add(new UpdateOperationError(nameof(request.ExperienceLevel), "Choose a valid experience level."));
+			}
+
+			if (!Enum.IsDefined(request.AvailabilityStatus))
+			{
+				errors.Add(new UpdateOperationError(nameof(request.AvailabilityStatus), "Choose a valid availability status."));
+			}
+
+			ValidateOptionalUrl(portfolioUrl, nameof(request.ExternalPortfolioUrl), "Portfolio URL", errors);
+
+			if (errors.Count > 0)
+			{
+				return UpdateOperationResult.Failed(errors.ToArray());
+			}
+
+			var user = await _applicationUserRepository.GetWithProfileForUpdateAsync(userId, cancellationToken);
+			var profile = user?.FreelancerProfile;
+			if (profile is null)
+			{
+				return UpdateOperationResult.Missing();
+			}
+
+			profile.ProfessionalTitle = professionalTitle;
+			profile.HourlyRate = request.HourlyRate;
+			profile.Bio = bio;
+			profile.ExperienceLevel = request.ExperienceLevel;
+			profile.AvailabilityStatus = request.AvailabilityStatus;
+			profile.ExternalPortfolioUrl = portfolioUrl;
+			profile.UpdatedAt = DateTime.UtcNow;
+
+			await _unitOfWork.SaveChangesAsync(cancellationToken);
+			return UpdateOperationResult.Success();
 		}
 
 		public async Task<bool> UpdatePhotoAsync(
@@ -176,6 +285,30 @@ namespace FreelanceHub.Application.Services.Implementations
 			{
 				_logger.LogWarning(exception, "Unable to delete profile image file {StorageKey}.", storageKey);
 			}
+		}
+
+		private static void ValidateOptionalUrl(
+			string? value,
+			string fieldName,
+			string displayName,
+			List<UpdateOperationError> errors)
+		{
+			if (value is null)
+			{
+				return;
+			}
+
+			if (value.Length > 500
+				|| !Uri.TryCreate(value, UriKind.Absolute, out var uri)
+				|| (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+			{
+				errors.Add(new UpdateOperationError(fieldName, $"{displayName} must be a valid HTTP or HTTPS URL of at most 500 characters."));
+			}
+		}
+
+		private static string? NormalizeOptional(string? value)
+		{
+			return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 		}
 	}
 }

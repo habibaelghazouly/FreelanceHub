@@ -7,6 +7,16 @@ namespace FreelanceHub.Application.Services.Abstractions
 	{
 		Task<UserProfileResult?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
 
+		Task<UpdateOperationResult> UpdateCompanyProfileAsync(
+			int userId,
+			UpdateCompanyProfileRequest request,
+			CancellationToken cancellationToken = default);
+
+		Task<UpdateOperationResult> UpdateFreelancerProfileAsync(
+			int userId,
+			UpdateFreelancerProfileRequest request,
+			CancellationToken cancellationToken = default);
+
 		Task<bool> UpdatePhotoAsync(int userId, UploadedFileRequest profileImage, CancellationToken cancellationToken = default);
 	}
 }

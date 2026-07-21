@@ -1,6 +1,6 @@
 @using FreelanceHub.Application.DTOs.Results
 @using FreelanceHub.Domain.Enums
-@model UserProfileResult
+@model ProfilePageViewModel
 
 @section Styles {
     <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
@@ -9,50 +9,59 @@
 @{
     ViewData["Title"] = "Profile";
     ViewData["MainContainerClass"] = "container-fluid px-3 px-lg-4";
+    var profile = Model.Profile;
 
-    var firstInitial = string.IsNullOrWhiteSpace(Model.FirstName) ? string.Empty : Model.FirstName[..1];
-    var lastInitial = string.IsNullOrWhiteSpace(Model.LastName) ? string.Empty : Model.LastName[..1];
+    var firstInitial = string.IsNullOrWhiteSpace(profile.FirstName) ? string.Empty : profile.FirstName[..1];
+    var lastInitial = string.IsNullOrWhiteSpace(profile.LastName) ? string.Empty : profile.LastName[..1];
     var initials = $"{firstInitial}{lastInitial}".ToUpperInvariant();
 
-    var hasCompanyWebsite = Uri.TryCreate(Model.CompanyWebsite, UriKind.Absolute, out var companyWebsiteUri)
+    var hasCompanyWebsite = Uri.TryCreate(profile.CompanyWebsite, UriKind.Absolute, out var companyWebsiteUri)
         && (companyWebsiteUri.Scheme == Uri.UriSchemeHttp || companyWebsiteUri.Scheme == Uri.UriSchemeHttps);
 
-    var hasPortfolioUrl = Uri.TryCreate(Model.ExternalPortfolioUrl, UriKind.Absolute, out var portfolioUri)
+    var hasPortfolioUrl = Uri.TryCreate(profile.ExternalPortfolioUrl, UriKind.Absolute, out var portfolioUri)
         && (portfolioUri.Scheme == Uri.UriSchemeHttp || portfolioUri.Scheme == Uri.UriSchemeHttps);
-    var hasRating = Model.RatingCount > 0;
-    var ratingLabel = hasRating ? Model.RatingAverage.ToString("0.0") : "New";
-    var availabilityLabel = Model.AvailabilityStatus switch
+    var hasRating = profile.RatingCount > 0;
+    var ratingLabel = hasRating ? profile.RatingAverage.ToString("0.0") : "New";
+    var availabilityLabel = profile.AvailabilityStatus switch
     {
         FreelancerAvailabilityStatus.Available => "Available",
         FreelancerAvailabilityStatus.Busy => "Busy",
         FreelancerAvailabilityStatus.Unavailable => "Unavailable",
         _ => null
     };
-    var availabilityClass = Model.AvailabilityStatus switch
+    var availabilityClass = profile.AvailabilityStatus switch
     {
         FreelancerAvailabilityStatus.Available => "is-available",
         FreelancerAvailabilityStatus.Busy => "is-busy",
         FreelancerAvailabilityStatus.Unavailable => "is-unavailable",
         _ => string.Empty
     };
-    var isCompanyClient = Model.Role == "Client" && Model.ClientType == ClientType.Company;
-    var profileSummary = Model.Role == "Freelancer"
-        ? Model.ProfessionalTitle
+    var isCompanyClient = profile.Role == "Client" && profile.ClientType == ClientType.Company;
+    var profileSummary = profile.Role == "Freelancer"
+        ? profile.ProfessionalTitle
         : isCompanyClient
-            ? Model.CompanyName
-            : Model.Role == "Client"
+            ? profile.CompanyName
+            : profile.Role == "Client"
                 ? "Individual client"
                 : "Account member";
 }
 
-<div class="profile-page py-4 py-lg-5">
+<div class="profile-page py-4 py-lg-5" data-open-modal="@Model.OpenModal">
     <header class="profile-page-heading">
         <div>
             <span class="profile-eyebrow">Profile overview</span>
             <p>Your professional identity and account details in one place.</p>
         </div>
-        <a class="profile-back-link" asp-controller="Home" asp-action="Index">Back to home</a>
+        <div class="profile-heading-actions">
+            <a class="profile-back-link" asp-controller="Account" asp-action="Manage">Account settings</a>
+            <a class="profile-back-link" asp-controller="Home" asp-action="Index">Back to home</a>
+        </div>
     </header>
+
+    @if (TempData["ProfileUpdateSuccess"] is string profileSuccessMessage)
+    {
+        <div class="alert alert-success" role="status">@profileSuccessMessage</div>
+    }
 
     @if (TempData["ProfilePhotoSuccess"] is string successMessage)
     {
@@ -66,13 +75,13 @@
     <section class="profile-hero">
         <div class="profile-hero-content">
             <div class="profile-avatar-wrap">
-                @if (!string.IsNullOrWhiteSpace(Model.ProfileImageUrl))
+                @if (!string.IsNullOrWhiteSpace(profile.ProfileImageUrl))
                 {
-                    <img src="@Model.ProfileImageUrl" alt="@Model.FirstName @Model.LastName" class="profile-avatar" />
+                    <img src="@profile.ProfileImageUrl" alt="@profile.FirstName @profile.LastName" class="profile-avatar" />
                 }
                 else
                 {
-                    <div class="profile-avatar profile-avatar-fallback" aria-label="@Model.FirstName @Model.LastName">
+                    <div class="profile-avatar profile-avatar-fallback" aria-label="@profile.FirstName @profile.LastName">
                         @initials
                     </div>
                 }
@@ -92,9 +101,9 @@
             </div>
 
             <div class="profile-identity">
-                <span class="profile-role">@Model.Role account</span>
-                <h1>@Model.FirstName @Model.LastName</h1>
-                <p class="profile-handle">@@@Model.Username</p>
+                <span class="profile-role">@profile.Role account</span>
+                <h1>@profile.FirstName @profile.LastName</h1>
+                <p class="profile-handle">@@@profile.Username</p>
 
                 @if (!string.IsNullOrWhiteSpace(profileSummary))
                 {
@@ -108,11 +117,11 @@
                     <span>Rating</span>
                 </div>
                 <div>
-                    <strong>@Model.RatingCount</strong>
-                    <span>@(Model.RatingCount == 1 ? "Review" : "Reviews")</span>
+                    <strong>@profile.RatingCount</strong>
+                    <span>@(profile.RatingCount == 1 ? "Review" : "Reviews")</span>
                 </div>
                 <div>
-                    <strong>@Model.JoinedAt.ToString("yyyy")</strong>
+                    <strong>@profile.JoinedAt.ToString("yyyy")</strong>
                     <span>Joined</span>
                 </div>
             </div>
@@ -121,7 +130,7 @@
 
     <div class="row g-4 g-xl-5 mt-1 align-items-start">
         <div class="col-lg-8 col-xl-9">
-            @if (Model.Role == "Freelancer")
+            @if (profile.Role == "Freelancer")
             {
                 <section class="profile-panel mb-4">
                     <div class="profile-panel-heading">
@@ -130,15 +139,19 @@
                             <h2>About my work</h2>
                         </div>
 
-                        @if (availabilityLabel is not null)
-                        {
-                            <span class="availability-badge @availabilityClass">
-                                @availabilityLabel
-                            </span>
-                        }
+                        <div class="profile-panel-actions">
+                            @if (availabilityLabel is not null)
+                            {
+                                <span class="availability-badge @availabilityClass">
+                                    @availabilityLabel
+                                </span>
+                            }
+                            <button type="button" class="profile-edit-trigger" data-bs-toggle="modal"
+                                    data-bs-target="#edit-freelancer-profile-modal">Edit profile</button>
+                        </div>
                     </div>
 
-                    @if (string.IsNullOrWhiteSpace(Model.Bio))
+                    @if (string.IsNullOrWhiteSpace(profile.Bio))
                     {
                         <div class="profile-empty-state">
                             <strong>Professional bio coming soon</strong>
@@ -147,53 +160,55 @@
                     }
                     else
                     {
-                        <p class="profile-description">@Model.Bio</p>
+                        <p class="profile-description">@profile.Bio</p>
                     }
 
                     <div class="profile-facts">
                         <div class="profile-fact">
                             <span>Experience</span>
-                            <strong>@(Model.ExperienceLevel?.ToString() ?? "Not specified")</strong>
+                            <strong>@(profile.ExperienceLevel?.ToString() ?? "Not specified")</strong>
                         </div>
                         <div class="profile-fact">
                             <span>Hourly rate</span>
-                            <strong>@(Model.HourlyRate.HasValue ? $"${Model.HourlyRate.Value:N2} / hr" : "Not specified")</strong>
+                            <strong>@(profile.HourlyRate.HasValue ? $"${profile.HourlyRate.Value:N2} / hr" : "Not specified")</strong>
                         </div>
                         <div class="profile-fact">
                             <span>Rating</span>
                             <div class="profile-rating-row">
                                 <strong>@ratingLabel</strong>
-                                <small>@(hasRating ? $"out of 5 from {Model.RatingCount} reviews" : "No reviews yet")</small>
+                                <small>@(hasRating ? $"out of 5 from {profile.RatingCount} reviews" : "No reviews yet")</small>
                             </div>
                         </div>
                     </div>
 
                 </section>
             }
-            else if (Model.Role == "Client")
+            else if (profile.Role == "Client")
             {
                 <section class="profile-panel mb-4">
                     @if (isCompanyClient)
                     {
                         <div class="company-heading">
-                            @if (!string.IsNullOrWhiteSpace(Model.CompanyLogoUrl))
+                            @if (!string.IsNullOrWhiteSpace(profile.CompanyLogoUrl))
                             {
-                                <img src="@Model.CompanyLogoUrl" alt="@Model.CompanyName logo" class="company-logo" />
+                                <img src="@profile.CompanyLogoUrl" alt="@profile.CompanyName logo" class="company-logo" />
                             }
                             else
                             {
                                 <div class="company-logo company-logo-fallback" aria-hidden="true">
-                                    @(string.IsNullOrWhiteSpace(Model.CompanyName) ? "C" : Model.CompanyName[..1].ToUpperInvariant())
+                                    @(string.IsNullOrWhiteSpace(profile.CompanyName) ? "C" : profile.CompanyName[..1].ToUpperInvariant())
                                 </div>
                             }
 
                             <div>
                                 <span class="profile-kicker">Company client</span>
-                                <h2>@Model.CompanyName</h2>
+                                <h2>@profile.CompanyName</h2>
                             </div>
+                            <button type="button" class="profile-edit-trigger ms-auto" data-bs-toggle="modal"
+                                    data-bs-target="#edit-company-profile-modal">Edit profile</button>
                         </div>
 
-                        <p class="profile-description">@Model.CompanyDescription</p>
+                        <p class="profile-description">@profile.CompanyDescription</p>
                     }
                     else
                     {
@@ -211,7 +226,7 @@
                             <span>Rating</span>
                             <div class="profile-rating-row">
                                 <strong>@ratingLabel</strong>
-                                <small>@(hasRating ? $"out of 5 from {Model.RatingCount} reviews" : "No reviews yet")</small>
+                                <small>@(hasRating ? $"out of 5 from {profile.RatingCount} reviews" : "No reviews yet")</small>
                             </div>
                         </div>
                         @if (isCompanyClient)
@@ -236,7 +251,7 @@
             {
                 <section class="profile-panel mb-4">
                     <span class="profile-kicker">Account profile</span>
-                    <h2>@Model.FirstName @Model.LastName</h2>
+                    <h2>@profile.FirstName @profile.LastName</h2>
                     <p class="profile-description mb-0">Role-specific profile details are not available for this account.
                     </p>
                 </section>
@@ -251,23 +266,23 @@
                 <dl>
                     <div>
                         <dt>Email</dt>
-                        <dd><a href="mailto:@Model.Email">@Model.Email</a></dd>
+                        <dd><a href="mailto:@profile.Email">@profile.Email</a></dd>
                     </div>
                     <div>
                         <dt>Username</dt>
-                        <dd>@@@Model.Username</dd>
+                        <dd>@@@profile.Username</dd>
                     </div>
                     <div>
                         <dt>Account type</dt>
-                        <dd>@Model.Role</dd>
+                        <dd>@profile.Role</dd>
                     </div>
                     <div>
                         <dt>Member since</dt>
-                        <dd><time datetime="@Model.JoinedAt.ToString("yyyy-MM-dd")">@Model.JoinedAt.ToString("MMMM yyyy")</time></dd>
+                        <dd><time datetime="@profile.JoinedAt.ToString("yyyy-MM-dd")">@profile.JoinedAt.ToString("MMMM yyyy")</time></dd>
                     </div>
                 </dl>
 
-                <a class="profile-contact-button" href="mailto:@Model.Email">Email @Model.FirstName</a>
+                <a class="profile-contact-button" href="mailto:@profile.Email">Email @profile.FirstName</a>
 
                 @if (hasPortfolioUrl)
                 {
@@ -284,19 +299,44 @@
     </div>
 </div>
 
+@if (Model.CompanyEditor is not null)
+{
+    <partial name="_EditCompanyProfileModal" for="CompanyEditor" />
+}
+
+@if (Model.FreelancerEditor is not null)
+{
+    <partial name="_EditFreelancerProfileModal" for="FreelancerEditor" />
+}
+
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
         (() => {
+            const page = document.querySelector(".profile-page");
             const form = document.getElementById("profile-photo-form");
             const input = document.getElementById("profile-photo-input");
             const button = document.getElementById("profile-photo-button");
 
-            button.addEventListener("click", () => input.click());
-            input.addEventListener("change", () => {
-                if (input.files.length > 0) {
-                    form.requestSubmit();
+            if (form && input && button) {
+                button.addEventListener("click", () => input.click());
+                input.addEventListener("change", () => {
+                    if (input.files.length > 0) {
+                        form.requestSubmit();
+                    }
+                });
+            }
+
+            const modalId = page?.dataset.openModal;
+            if (modalId) {
+                const modalElement = document.getElementById(modalId);
+                if (modalElement) {
+                    modalElement.addEventListener("shown.bs.modal", () => {
+                        modalElement.querySelector(".input-validation-error, input, select, textarea")?.focus();
+                    }, { once: true });
+                    bootstrap.Modal.getOrCreateInstance(modalElement).show();
                 }
-            });
+            }
         })();
     </script>
 }

@@ -1,4 +1,5 @@
-﻿using FreelanceHub.Application.DTOs.Requests;
+﻿using System.Security.Claims;
+using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Web.ViewModels;
@@ -120,6 +121,94 @@ namespace FreelanceHub.Web.Controllers
 		}
 
 		[HttpGet]
+		[Authorize]
+		public async Task<IActionResult> Manage()
+		{
+			if (!TryGetCurrentUserId(out var userId))
+			{
+				return Challenge();
+			}
+
+			return await AccountSettingsViewAsync(userId);
+		}
+
+		[HttpPost]
+		[Authorize]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdateAccountDetails(
+			[Bind(Prefix = nameof(AccountSettingsViewModel.AccountDetails))] EditAccountDetailsViewModel model)
+		{
+			if (!TryGetCurrentUserId(out var userId))
+			{
+				return Challenge();
+			}
+
+			if (!ModelState.IsValid)
+			{
+				return await AccountSettingsViewAsync(userId, model);
+			}
+
+			var result = await _applicationUserService.UpdateAccountDetailsAsync(userId, new UpdateAccountDetailsRequest
+			{
+				FirstName = model.FirstName,
+				LastName = model.LastName,
+				Email = model.Email,
+				CurrentPassword = model.CurrentPassword
+			});
+
+			if (result.NotFound)
+			{
+				return NotFound();
+			}
+
+			if (!result.Succeeded)
+			{
+				AddErrors(result, nameof(AccountSettingsViewModel.AccountDetails));
+				return await AccountSettingsViewAsync(userId, model);
+			}
+
+			TempData["AccountSettingsSuccess"] = "Your account details were updated.";
+			return RedirectToAction(nameof(Manage));
+		}
+
+		[HttpPost]
+		[Authorize]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> ChangePassword(
+			[Bind(Prefix = nameof(AccountSettingsViewModel.Password))] ChangePasswordViewModel model)
+		{
+			if (!TryGetCurrentUserId(out var userId))
+			{
+				return Challenge();
+			}
+
+			if (!ModelState.IsValid)
+			{
+				return await AccountSettingsViewAsync(userId);
+			}
+
+			var result = await _applicationUserService.ChangePasswordAsync(userId, new ChangePasswordRequest
+			{
+				CurrentPassword = model.CurrentPassword,
+				NewPassword = model.NewPassword
+			});
+
+			if (result.NotFound)
+			{
+				return NotFound();
+			}
+
+			if (!result.Succeeded)
+			{
+				AddErrors(result, nameof(AccountSettingsViewModel.Password));
+				return await AccountSettingsViewAsync(userId);
+			}
+
+			TempData["AccountSettingsSuccess"] = "Your password was changed.";
+			return RedirectToAction(nameof(Manage));
+		}
+
+		[HttpGet]
 		public IActionResult Login(string? returnUrl = null)
 		{
 			ViewData["ReturnUrl"] = returnUrl;
@@ -201,12 +290,55 @@ namespace FreelanceHub.Web.Controllers
 			return request;
 		}
 
+		private async Task<IActionResult> AccountSettingsViewAsync(
+			int userId,
+			EditAccountDetailsViewModel? attemptedDetails = null)
+		{
+			var details = await _applicationUserService.GetAccountDetailsAsync(userId);
+			if (details is null)
+			{
+				return NotFound();
+			}
+
+			var accountDetails = attemptedDetails ?? new EditAccountDetailsViewModel
+			{
+				FirstName = details.FirstName,
+				LastName = details.LastName,
+				Email = details.Email
+			};
+
+			accountDetails.Username = details.Username;
+			accountDetails.IsEmailConfirmed = details.IsEmailConfirmed
+				&& string.Equals(accountDetails.Email, details.Email, StringComparison.OrdinalIgnoreCase);
+
+			return View("Manage", new AccountSettingsViewModel
+			{
+				AccountDetails = accountDetails
+			});
+		}
+
 		private void AddErrors(ApplicationUserServiceResult result)
 		{
 			foreach (var error in result.Errors)
 			{
 				ModelState.AddModelError(string.Empty, error);
 			}
+		}
+
+		private void AddErrors(UpdateOperationResult result, string prefix)
+		{
+			foreach (var error in result.Errors)
+			{
+				var key = string.IsNullOrWhiteSpace(error.FieldName)
+					? string.Empty
+					: $"{prefix}.{error.FieldName}";
+				ModelState.AddModelError(key, error.Message);
+			}
+		}
+
+		private bool TryGetCurrentUserId(out int userId)
+		{
+			return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
 		}
 	}
 }

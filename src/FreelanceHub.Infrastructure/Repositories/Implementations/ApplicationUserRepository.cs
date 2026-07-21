@@ -24,5 +24,13 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 				.Include(user => user.FreelancerProfile)
 				.SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
 		}
+
+		public Task<ApplicationUser?> GetWithProfileForUpdateAsync(int userId, CancellationToken cancellationToken = default)
+		{
+			return _dbContext.Users
+				.Include(user => user.ClientProfile)
+				.Include(user => user.FreelancerProfile)
+				.SingleOrDefaultAsync(user => user.Id == userId, cancellationToken);
+		}
 	}
 }

@@ -52,6 +52,13 @@
   color: var(--profile-accent);
 }
 
+.profile-heading-actions,
+.profile-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
 .profile-hero {
   border-top: 6px solid var(--profile-ink);
   border-bottom: 1px solid var(--profile-rule);
@@ -232,6 +239,23 @@
 
 .availability-badge.is-unavailable {
   color: #994a31;
+}
+
+.profile-edit-trigger {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid var(--profile-ink);
+  background: transparent;
+  color: var(--profile-ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-edit-trigger:hover {
+  background: var(--profile-ink);
+  color: #fff;
 }
 
 .profile-description {
@@ -421,10 +445,47 @@
   background: var(--profile-paper);
 }
 
+.profile-edit-modal {
+  border: 0;
+  border-top: 6px solid var(--profile-ink);
+  border-radius: 0;
+}
+
+.profile-edit-modal .modal-header,
+.profile-edit-modal .modal-body,
+.profile-edit-modal .modal-footer {
+  padding-right: 30px;
+  padding-left: 30px;
+}
+
+.profile-edit-modal .modal-header {
+  align-items: flex-start;
+  padding-top: 26px;
+  padding-bottom: 20px;
+}
+
+.profile-edit-modal .modal-title {
+  margin-top: 5px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+  font-weight: 400;
+}
+
+.profile-edit-modal .modal-body {
+  padding-top: 24px;
+  padding-bottom: 28px;
+}
+
+.profile-edit-modal .modal-footer {
+  padding-top: 18px;
+  padding-bottom: 22px;
+}
+
 .profile-back-link:focus-visible,
 .profile-link:focus-visible,
 .profile-contact-button:focus-visible,
 .profile-secondary-link:focus-visible,
+.profile-edit-trigger:focus-visible,
 .profile-photo-button:focus-visible,
 .profile-contact a:focus-visible {
   outline: 2px solid var(--profile-accent);
@@ -494,6 +555,19 @@
 
   .profile-panel-heading {
     flex-direction: column;
+  }
+
+  .profile-heading-actions,
+  .profile-panel-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .profile-edit-modal .modal-header,
+  .profile-edit-modal .modal-body,
+  .profile-edit-modal .modal-footer {
+    padding-right: 20px;
+    padding-left: 20px;
   }
 
   .profile-facts,

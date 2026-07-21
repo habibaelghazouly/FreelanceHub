@@ -256,7 +256,7 @@ namespace FreelanceHub.Application.Services.Implementations
 
             foreach (var uploadedFile in uploadedPortfolioFiles)
             {
-                await _fileUploadService.DeleteAsync(uploadedFile.StorageKey, cancellationToken);
+                await _fileUploadService.DeleteAsync(uploadedFile.StorageKey);
             }
         }
     }

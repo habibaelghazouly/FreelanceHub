@@ -130,9 +130,9 @@ namespace FreelanceHub.Application.Services.Implementations
             };
         }
 
-        public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
+        public Task DeleteAsync(string storageKey)
         {
-            return _fileStorageRepository.DeleteAsync(storageKey, cancellationToken);
+            return _fileStorageRepository.DeleteAsync(storageKey);
         }
 
         private static bool IsExtensionCompatible(string extension, string contentType)

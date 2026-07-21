@@ -63,7 +63,7 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 			return (storedFileName, $"/{storageKey}", storageKey);
 		}
 
-		public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
+		public Task DeleteAsync(string storageKey)
 		{
 			if (!string.IsNullOrWhiteSpace(storageKey))
 			{
