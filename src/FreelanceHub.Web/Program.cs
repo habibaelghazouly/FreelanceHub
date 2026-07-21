@@ -59,6 +59,7 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IClientProfileRepository, ClientProfileRepository>();
 			builder.Services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
 			builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
+			builder.Services.AddScoped<IJobService, JobService>();
 
 			var app = builder.Build();
 

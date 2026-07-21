@@ -1,0 +1,68 @@
+@*
+    Reusable Modal for selecting Categories, Tags, or Skills
+    
+    Usage:
+    <partial name="_SelectItemsModal" model="@new SelectItemsModalViewModel 
+    { 
+        ModalId = "categoryModal",
+        Title = "Select Categories",
+        ItemType = "category",
+        Items = categoriesList
+    }" />
+    
+    Then in JS:
+    openSelectModal('categoryModal', 'category', callbackFunctionName);
+*@
+
+@model SelectItemsModalViewModel
+
+<div class="modal fade" id="@Model.ModalId" tabindex="-1" aria-labelledby="@(Model.ModalId + "Label")" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="@(Model.ModalId + "Label")">@Model.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search input -->
+                <div class="mb-3">
+                    <input type="text" 
+                           class="form-control" 
+                           id="@(Model.ModalId + "_search")"
+                           placeholder="Search @Model.Title.ToLower()..." />
+                </div>
+
+                <!-- Items list with checkboxes -->
+                <div class="list-group" id="@(Model.ModalId + "_list")" style="max-height: 400px; overflow-y: auto;">
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <label class="list-group-item">
+                                <input type="checkbox" 
+                                       class="form-check-input @(Model.ItemType)Item" 
+                                       value="@item.Id" 
+                                       data-name="@item.Name" 
+                                       data-modal="@Model.ModalId" />
+                                <span class="ms-2">@item.Name</span>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted p-3">No @Model.ItemType.ToLower()s available.</p>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" 
+                        class="btn btn-primary" 
+                        id="@(Model.ModalId + "_confirmBtn")"
+                        onclick="confirmSelection('@Model.ModalId', '@Model.ItemType')">
+                    Confirm Selection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

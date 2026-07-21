@@ -1,0 +1,152 @@
+@model CreateJobViewModel
+
+@{
+    ViewData["Title"] = "Create Job";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-3">Create Job</h1>
+                <p class="text-muted mb-4">Fill in the details to create a new job posting.</p>
+
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Budget" class="form-label"></label>
+                        <input asp-for="Budget" type="number" step="0.01" class="form-control" />
+                        <span asp-validation-for="Budget" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Deadline" class="form-label"></label>
+                        <input asp-for="Deadline" type="date" class="form-control" />
+                        <span asp-validation-for="Deadline" class="text-danger"></span>
+                    </div>
+
+                    <!-- Categories Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Categories</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="openSelectModal('categoryModal', 'category', handleCategorySelection)">
+                                Select Categories
+                            </button>
+                            <small class="text-muted align-self-center" id="categoriesCount">(0 selected)</small>
+                        </div>
+                        <div id="selectedCategoriesDisplay" class="mt-2">
+                            <small id="categoryList" class="text-muted">None selected</small>
+                        </div>
+                        <input type="hidden" asp-for="CategoryIds" id="categoryIds" />
+                    </div>
+
+                    <!-- Tags Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Tags</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="openSelectModal('tagModal', 'tag', handleTagSelection)">
+                                Select Tags
+                            </button>
+                            <small class="text-muted align-self-center" id="tagsCount">(0 selected)</small>
+                        </div>
+                        <div id="selectedTagsDisplay" class="mt-2">
+                            <small id="tagList" class="text-muted">None selected</small>
+                        </div>
+                        <input type="hidden" asp-for="TagIds" id="tagIds" />
+                    </div>
+
+                    <!-- Skills Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Required Skills</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="openSelectModal('skillModal', 'skill', handleSkillSelection)">
+                                Select Skills
+                            </button>
+                            <small class="text-muted align-self-center" id="skillsCount">(0 selected)</small>
+                        </div>
+                        <div id="selectedSkillsDisplay" class="mt-2">
+                            <small id="skillList" class="text-muted">None selected</small>
+                        </div>
+                        <input type="hidden" asp-for="SkillIds" id="skillIds" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Create Job</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include the Modal Partials -->
+@{
+    SelectItemsModalViewModel? categoryModal = new SelectItemsModalViewModel 
+    { 
+        ModalId = "categoryModal",
+        Title = "Select Categories",
+        ItemType = "category",
+        Items = (IEnumerable<SelectableItem>)ViewBag.Categories ?? new List<SelectableItem>()
+    };
+    
+    SelectItemsModalViewModel? tagModal = new SelectItemsModalViewModel 
+    { 
+        ModalId = "tagModal",
+        Title = "Select Tags",
+        ItemType = "tag",
+        Items = (IEnumerable<SelectableItem>)ViewBag.Tags ?? new List<SelectableItem>()
+    };
+    
+    SelectItemsModalViewModel?  skillModal = new SelectItemsModalViewModel 
+    { 
+        ModalId = "skillModal",
+        Title = "Select Required Skills",
+        ItemType = "skill",
+        Items = (IEnumerable<SelectableItem>)ViewBag.Skills ?? new List<SelectableItem>()
+    };
+}
+
+<partial name="_SelectItemsModal" model="categoryModal" />
+<partial name="_SelectItemsModal" model="tagModal" />
+<partial name="_SelectItemsModal" model="skillModal" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/selectItemsModal.js"></script>
+    <script>
+        // Handler for category selection
+        function handleCategorySelection(ids, names) {
+            document.getElementById('categoryList').textContent = names.length > 0 ? names.join(', ') : 'None selected';
+            document.getElementById('categoriesCount').textContent = `(${ids.length} selected)`;
+            document.getElementById('categoryIds').value = ids.join(',');
+        }
+
+        // Handler for tag selection
+        function handleTagSelection(ids, names) {
+            document.getElementById('tagList').textContent = names.length > 0 ? names.join(', ') : 'None selected';
+            document.getElementById('tagsCount').textContent = `(${ids.length} selected)`;
+            document.getElementById('tagIds').value = ids.join(',');
+        }
+
+        // Handler for skill selection
+        function handleSkillSelection(ids, names) {
+            document.getElementById('skillList').textContent = names.length > 0 ? names.join(', ') : 'None selected';
+            document.getElementById('skillsCount').textContent = `(${ids.length} selected)`;
+            document.getElementById('skillIds').value = ids.join(',');
+        }
+    </script>
+}
