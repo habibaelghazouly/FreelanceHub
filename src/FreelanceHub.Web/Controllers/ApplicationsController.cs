@@ -5,6 +5,7 @@ using FreelanceHub.Domain.Enums;
 using FreelanceHub.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using FreelanceHub.Infrastructure.Repositories.Abstractions;
 
 namespace FreelanceHub.Web.Controllers
 {
@@ -12,19 +13,46 @@ namespace FreelanceHub.Web.Controllers
     public class ApplicationsController : Controller
     {
         private readonly IApplicationManagementService _applicationManagementService;
+        private readonly IApplicationRepository _applicationRepository;
 
-        public ApplicationsController(IApplicationManagementService applicationManagementService)
+        public ApplicationsController(IApplicationManagementService applicationManagementService, IApplicationRepository applicationRepository  )
         {
             _applicationManagementService = applicationManagementService;
+            _applicationRepository = applicationRepository;
         }
 
         [HttpGet]
         [Authorize(Roles = "Freelancer")]
-        public IActionResult Submit(int? jobId = null)
+        public async Task<IActionResult> Submit(int jobId)
         {
+
+            if (jobId <= 0)
+            {
+                return BadRequest("A valid Job ID is required to apply.");
+            }
+            if (!TryGetCurrentUserId(out var freelancerUserId))
+            {
+                return Forbid();
+            }
+
+            var job = await _applicationManagementService.GetOpenJobByIdAsync(jobId, HttpContext.RequestAborted);
+            if (job is null)
+            {
+                return NotFound("The requested job is not available for application.");
+            }
+            var alreadyApplied = await _applicationRepository.HasFreelancerAppliedAsync(jobId, freelancerUserId, HttpContext.RequestAborted);
+
+            if (alreadyApplied)
+            {
+                
+                ViewBag.JobTitle = job.Title;
+                return View("AlreadySubmitted");
+            }
+
             return View(new SubmitApplicationViewModel
             {
-                JobId = jobId ?? 0
+                JobId = job.JobId,
+                JobTitle = job.Title
             });
         }
 
@@ -74,7 +102,7 @@ namespace FreelanceHub.Web.Controllers
                 }
 
                 TempData["SuccessMessage"] = "Application submitted successfully.";
-                return RedirectToAction("Index" , "Home");
+                return RedirectToAction(nameof(MyApplications));
             }
             finally
             {

@@ -137,7 +137,11 @@ namespace FreelanceHub.Application.Services.Implementations
                 return ApplicationActionResult.Failed("Unable to process your application at this moment. Please try again.");
             }
         }
-
+        public Task<Job?> GetOpenJobByIdAsync(int jobId, CancellationToken cancellationToken = default)
+        {
+            // Uses the repository method that already checks if job is Open and not deleted
+            return _applicationRepository.GetOpenJobByIdAsync(jobId, cancellationToken);
+        }
         public async Task<FreelancerApplicationDashboardResult> GetFreelancerDashboardAsync(int freelancerUserId, CancellationToken cancellationToken = default)
         {
             var applications = await _applicationRepository.ListByFreelancerUserIdAsync(freelancerUserId, cancellationToken);

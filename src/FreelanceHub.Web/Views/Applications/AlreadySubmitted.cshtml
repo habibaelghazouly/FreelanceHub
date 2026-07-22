@@ -1,0 +1,40 @@
+﻿@{
+    ViewData["Title"] = "Application Submitted";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="card-body">
+
+                    <!-- Soft Status Badge Icon -->
+                    <div class="mb-3">
+                        <span class="badge bg-info-subtle text-info rounded-circle p-3">
+                            <i class="bi bi-info-circle-fill fs-2"></i>
+                        </span>
+                    </div>
+
+                    <!-- Clean Heading -->
+                    <h4 class="fw-bold mb-2">You've Already Applied</h4>
+
+                    <!-- Description -->
+                    <p class="text-secondary mb-4 small">
+                        An application for <strong class="text-dark">@(ViewBag.JobTitle ?? "this position")</strong> has already been submitted from your account. You can track its status in your dashboard.
+                    </p>
+
+                    <!-- Minimal Action Buttons -->
+                    <div class="d-flex flex-column gap-2">
+                        <a asp-controller="Applications" asp-action="MyApplications" class="btn btn-primary rounded-3 py-2 fw-medium">
+                            <i class="bi bi-folder-check me-2"></i>View My Applications
+                        </a>
+                        <a asp-controller="Jobs" asp-action="Index" class="btn btn-light text-secondary rounded-3 py-2 fw-medium">
+                            Return to Jobs
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

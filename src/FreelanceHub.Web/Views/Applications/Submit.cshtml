@@ -4,34 +4,35 @@
     ViewData["Title"] = "Submit Application";
 }
 
-<h1 class="mb-4">Submit Application</h1>
+<h1 class="mb-2">Submit Application</h1>
+@if (!string.IsNullOrEmpty(Model.JobTitle))
+{
+    <h4 class="text-muted mb-4">Applying for: <strong>@Model.JobTitle</strong></h4>
+}
 
 <div class="row">
     <div class="col-md-8">
         <form asp-action="Submit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="mb-3">
-                <label asp-for="JobId" class="form-label"></label>
-                <input asp-for="JobId" class="form-control" />
-                <span asp-validation-for="JobId" class="text-danger"></span>
-            </div>
+            <!-- HIDDEN FIELD: Automatically posts the JobId back without user input -->
+            <input type="hidden" asp-for="JobId" />
 
             <div class="mb-3">
                 <label asp-for="ProposedAmount" class="form-label"></label>
-                <input asp-for="ProposedAmount" class="form-control" />
+                <input asp-for="ProposedAmount" class="form-control" placeholder="0.00" />
                 <span asp-validation-for="ProposedAmount" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="TimelineDays" class="form-label"></label>
-                <input asp-for="TimelineDays" class="form-control" />
+                <input asp-for="TimelineDays" class="form-control" placeholder="e.g., 14" />
                 <span asp-validation-for="TimelineDays" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="CoverLetter" class="form-label"></label>
-                <textarea asp-for="CoverLetter" class="form-control" rows="7"></textarea>
+                <textarea asp-for="CoverLetter" class="form-control" rows="7" placeholder="Explain why you're a great fit..."></textarea>
                 <span asp-validation-for="CoverLetter" class="text-danger"></span>
             </div>
 
@@ -44,7 +45,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Submit Proposal</button>
-                <a asp-action="MyApplications" class="btn btn-outline-secondary">Back to My Applications</a>
+                <a asp-controller="Jobs" asp-action="Index" class="btn btn-outline-secondary">Return to Jobs</a>
             </div>
         </form>
     </div>

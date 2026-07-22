@@ -70,5 +70,6 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
                     application.ApplicationId == applicationId
                     && application.Job.ClientUserId == clientUserId, cancellationToken);
         }
+
     }
 }
