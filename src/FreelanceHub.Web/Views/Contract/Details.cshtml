@@ -1,0 +1,104 @@
+@model ContractDetailsViewModel
+
+@{
+    ViewData["Title"] = "Contract Details";
+    var contract = Model.Contract;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        @if (TempData["ReviewSuccess"] is string successMessage)
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <p class="text-uppercase text-muted small mb-1">Contract #@contract.ContractId</p>
+                <h1 class="h2 mb-1">@contract.JobTitle</h1>
+                <span class="badge text-bg-secondary">@contract.ContractStatus</span>
+            </div>
+            <div class="text-end">
+                <span class="text-muted d-block small">Agreed amount</span>
+                <strong class="fs-4">@contract.AgreedAmount.ToString("C")</strong>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <span class="text-muted d-block small">Client</span>
+                        <a asp-controller="Profile" asp-action="Index" asp-route-id="@contract.ClientUserId" class="fw-semibold text-decoration-none">
+                            @contract.ClientDisplayName
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block small">Freelancer</span>
+                        <a asp-controller="Profile" asp-action="Index" asp-route-id="@contract.FreelancerUserId" class="fw-semibold text-decoration-none">
+                            @contract.FreelancerDisplayName
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="text-muted d-block small">Started</span>
+                        <span>@contract.StartDate.ToString("MMM d, yyyy")</span>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="text-muted d-block small">Expected completion</span>
+                        <span>@(contract.ExpectedCompletionDate?.ToString("MMM d, yyyy") ?? "Not set")</span>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="text-muted d-block small">Actual completion</span>
+                        <span>@(contract.ActualCompletionDate?.ToString("MMM d, yyyy") ?? "Not set")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">Review @contract.RevieweeDisplayName</h2>
+
+                @if (contract.CanSubmitReview)
+                {
+                    <form asp-action="SubmitReview" asp-route-id="@contract.ContractId" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Review.Rating" class="form-label"></label>
+                            <select asp-for="Review.Rating" class="form-select">
+                                <option value="">Choose a rating</option>
+                                <option value="5">5 - Excellent</option>
+                                <option value="4">4 - Very good</option>
+                                <option value="3">3 - Good</option>
+                                <option value="2">2 - Fair</option>
+                                <option value="1">1 - Poor</option>
+                            </select>
+                            <span asp-validation-for="Review.Rating" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Review.Comment" class="form-label"></label>
+                            <textarea asp-for="Review.Comment" class="form-control" rows="5" placeholder="Share your experience (optional)"></textarea>
+                            <span asp-validation-for="Review.Comment" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Submit review</button>
+                    </form>
+                }
+                else if (contract.HasSubmittedReview)
+                {
+                    <div class="alert alert-info mb-0">You have already reviewed this contract.</div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary mb-0">Reviews become available when the contract is completed or terminated.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -24,6 +24,6 @@ namespace FreelanceHub.Domain.Models
 
         public Application AcceptedApplication { get; set; } = null!;
         public ICollection<ContractAttachment> ContractAttachments { get; set; } = new List<ContractAttachment>();
-        //public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

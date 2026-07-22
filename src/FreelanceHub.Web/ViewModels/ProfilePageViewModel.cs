@@ -8,6 +8,8 @@ namespace FreelanceHub.Web.ViewModels
 	{
 		public UserProfileResult Profile { get; set; } = new();
 
+		public bool IsOwnProfile { get; set; }
+
 		public EditCompanyProfileViewModel? CompanyEditor { get; set; }
 
 		public EditFreelancerProfileViewModel? FreelancerEditor { get; set; }
