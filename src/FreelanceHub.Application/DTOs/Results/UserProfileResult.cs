@@ -42,8 +42,10 @@ namespace FreelanceHub.Application.DTOs.Results
 
 		public string? ExternalPortfolioUrl { get; set; }
 
-		public int RatingAverage { get; set; }
+		public decimal RatingAverage { get; set; }
 
 		public int RatingCount { get; set; }
+
+		public IReadOnlyList<ReceivedReviewResult> ReceivedReviews { get; set; } = Array.Empty<ReceivedReviewResult>();
 	}
 }

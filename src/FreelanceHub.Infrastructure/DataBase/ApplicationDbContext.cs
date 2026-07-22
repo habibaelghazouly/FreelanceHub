@@ -34,6 +34,7 @@ namespace FreelanceHub.Infrastructure.DataBase
 		public DbSet<ClientProfile> ClientProfiles => Set<ClientProfile>();
 		public DbSet<Job> Jobs => Set<Job>();
 		public DbSet<Contract> Contracts => Set<Contract>();
+		public DbSet<Review> Reviews => Set<Review>();
 
 		public DbSet<Application> Applications => Set<Application>();
 

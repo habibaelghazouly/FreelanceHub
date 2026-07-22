@@ -25,14 +25,23 @@ namespace FreelanceHub.Web.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> Index()
+		public async Task<IActionResult> Index(int? id)
 		{
-			if (!TryGetCurrentUserId(out var userId))
+			if (!TryGetCurrentUserId(out var currentUserId))
 			{
 				return Challenge();
 			}
 
-			var model = await BuildProfilePageAsync(userId, HttpContext.RequestAborted);
+			var profileUserId = id ?? currentUserId;
+			if (profileUserId <= 0)
+			{
+				return NotFound();
+			}
+
+			var model = await BuildProfilePageAsync(
+				profileUserId,
+				HttpContext.RequestAborted,
+				isOwnProfile: profileUserId == currentUserId);
 			if (model is null)
 			{
 				return NotFound();
@@ -196,7 +205,8 @@ namespace FreelanceHub.Web.Controllers
 			CancellationToken cancellationToken,
 			EditCompanyProfileViewModel? companyEditor = null,
 			EditFreelancerProfileViewModel? freelancerEditor = null,
-			string? openModal = null)
+			string? openModal = null,
+			bool isOwnProfile = true)
 		{
 			var profile = await _profileService.GetByUserIdAsync(userId, cancellationToken);
 			if (profile is null)
@@ -208,7 +218,8 @@ namespace FreelanceHub.Web.Controllers
 			return new ProfilePageViewModel
 			{
 				Profile = profile,
-				CompanyEditor = isCompanyClient
+				IsOwnProfile = isOwnProfile,
+				CompanyEditor = isOwnProfile && isCompanyClient
 					? companyEditor ?? new EditCompanyProfileViewModel
 					{
 						CompanyName = profile.CompanyName ?? string.Empty,
@@ -216,7 +227,7 @@ namespace FreelanceHub.Web.Controllers
 						CompanyWebsite = profile.CompanyWebsite
 					}
 					: null,
-				FreelancerEditor = profile.Role == "Freelancer"
+				FreelancerEditor = isOwnProfile && profile.Role == "Freelancer"
 					? freelancerEditor ?? new EditFreelancerProfileViewModel
 					{
 						ProfessionalTitle = profile.ProfessionalTitle ?? string.Empty,

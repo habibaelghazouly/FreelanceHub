@@ -22,7 +22,7 @@ namespace FreelanceHub.Domain.Models
 
 		public Attachment? CompanyLogoAttachment { get; set; }
 
-		public int RatingAverage { get; set; }
+		public decimal RatingAverage { get; set; }
 
 		public int RatingCount { get; set; }
 

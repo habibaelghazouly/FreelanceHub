@@ -37,13 +37,7 @@
         _ => string.Empty
     };
     var isCompanyClient = profile.Role == "Client" && profile.ClientType == ClientType.Company;
-    var profileSummary = profile.Role == "Freelancer"
-        ? profile.ProfessionalTitle
-        : isCompanyClient
-            ? profile.CompanyName
-            : profile.Role == "Client"
-                ? "Individual client"
-                : "Account member";
+    var profileSummary = profile.Role == "Freelancer" ? profile.ProfessionalTitle : null;
 }
 
 <div class="profile-page py-4 py-lg-5" data-open-modal="@Model.OpenModal">
@@ -53,7 +47,10 @@
             <p>Your professional identity and account details in one place.</p>
         </div>
         <div class="profile-heading-actions">
-            <a class="profile-back-link" asp-controller="Account" asp-action="Manage">Account settings</a>
+            @if (Model.IsOwnProfile)
+            {
+                <a class="profile-back-link" asp-controller="Account" asp-action="Manage">Account settings</a>
+            }
             <a class="profile-back-link" asp-controller="Home" asp-action="Index">Back to home</a>
         </div>
     </header>
@@ -86,18 +83,21 @@
                     </div>
                 }
 
-                <form id="profile-photo-form" class="profile-photo-form" asp-controller="Profile"
-                      asp-action="UpdatePhoto" method="post" enctype="multipart/form-data">
-                    <input id="profile-photo-input" class="visually-hidden" type="file" name="profileImage"
-                           accept="image/jpeg,image/png,image/webp,image/gif" />
-                    <button id="profile-photo-button" class="profile-photo-button" type="button"
-                            title="JPG, PNG, WEBP, or GIF up to 2 MB">Update photo</button>
-                    <noscript>
-                        <input type="file" name="profileImage" accept="image/jpeg,image/png,image/webp,image/gif"
-                               required />
-                        <button class="profile-photo-button" type="submit">Save photo</button>
-                    </noscript>
-                </form>
+                @if (Model.IsOwnProfile)
+                {
+                    <form id="profile-photo-form" class="profile-photo-form" asp-controller="Profile"
+                          asp-action="UpdatePhoto" method="post" enctype="multipart/form-data">
+                        <input id="profile-photo-input" class="visually-hidden" type="file" name="profileImage"
+                               accept="image/jpeg,image/png,image/webp,image/gif" />
+                        <button id="profile-photo-button" class="profile-photo-button" type="button"
+                                title="JPG, PNG, WEBP, or GIF up to 2 MB">Update photo</button>
+                        <noscript>
+                            <input type="file" name="profileImage" accept="image/jpeg,image/png,image/webp,image/gif"
+                                   required />
+                            <button class="profile-photo-button" type="submit">Save photo</button>
+                        </noscript>
+                    </form>
+                }
             </div>
 
             <div class="profile-identity">
@@ -146,8 +146,11 @@
                                     @availabilityLabel
                                 </span>
                             }
-                            <button type="button" class="profile-edit-trigger" data-bs-toggle="modal"
-                                    data-bs-target="#edit-freelancer-profile-modal">Edit profile</button>
+                            @if (Model.IsOwnProfile)
+                            {
+                                <button type="button" class="profile-edit-trigger" data-bs-toggle="modal"
+                                        data-bs-target="#edit-freelancer-profile-modal">Edit profile</button>
+                            }
                         </div>
                     </div>
 
@@ -204,8 +207,11 @@
                                 <span class="profile-kicker">Company client</span>
                                 <h2>@profile.CompanyName</h2>
                             </div>
-                            <button type="button" class="profile-edit-trigger ms-auto" data-bs-toggle="modal"
-                                    data-bs-target="#edit-company-profile-modal">Edit profile</button>
+                            @if (Model.IsOwnProfile)
+                            {
+                                <button type="button" class="profile-edit-trigger ms-auto" data-bs-toggle="modal"
+                                        data-bs-target="#edit-company-profile-modal">Edit profile</button>
+                            }
                         </div>
 
                         <p class="profile-description">@profile.CompanyDescription</p>
@@ -256,18 +262,118 @@
                     </p>
                 </section>
             }
+
+            <section class="profile-panel profile-reviews">
+                <div class="profile-panel-heading">
+                    <div>
+                        <span class="profile-kicker">Contract feedback</span>
+                        <h2>Reviews</h2>
+                    </div>
+                    <span class="profile-review-count">@profile.RatingCount total</span>
+                </div>
+
+                @if (profile.ReceivedReviews.Count == 0)
+                {
+                    <div class="profile-empty-state">
+                        <strong>No reviews yet</strong>
+                        <span>Reviews from completed or terminated contracts will appear here.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="profile-review-toolbar" aria-label="Review controls">
+                        <label>
+                            <span>Filter</span>
+                            <select id="review-rating-filter" class="form-select form-select-sm">
+                                <option value="all">All ratings</option>
+                                <option value="5">5 stars</option>
+                                <option value="4">4 stars</option>
+                                <option value="3">3 stars</option>
+                                <option value="2">2 stars</option>
+                                <option value="1">1 star</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Sort by</span>
+                            <select id="review-sort" class="form-select form-select-sm">
+                                <option value="newest">Newest first</option>
+                                <option value="oldest">Oldest first</option>
+                                <option value="highest">Highest rating</option>
+                                <option value="lowest">Lowest rating</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div id="profile-review-list" class="profile-review-list">
+                        @foreach (var review in profile.ReceivedReviews)
+                        {
+                            var visibleSkills = review.ProjectSkills.Take(4).ToArray();
+                            var remainingSkillCount = review.ProjectSkills.Count - visibleSkills.Length;
+                            var reviewerAvatarUrl = string.IsNullOrWhiteSpace(review.ReviewerProfileImageUrl)
+                                ? Url.Content("~/img/default-avatar.svg")
+                                : review.ReviewerProfileImageUrl;
+
+                            <article class="profile-review-card" data-rating="@review.Rating" data-date="@review.CreatedAt.ToString("O")">
+                                <header class="profile-review-card-header">
+                                    <div class="profile-reviewer">
+                                        <img src="@reviewerAvatarUrl" alt="@review.ReviewerDisplayName" class="profile-reviewer-avatar" />
+                                        <div class="profile-reviewer-info">
+                                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@review.ReviewerUserId">
+                                                @review.ReviewerDisplayName
+                                            </a>
+                                            <span class="profile-review-rating" aria-label="@review.Rating out of 5 stars">
+                                                @review.Rating.ToString("0.0") / 5
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="profile-review-meta">
+                                        <strong>@review.ProjectPrice.ToString("C")</strong>
+                                        <time datetime="@review.CreatedAt.ToString("yyyy-MM-dd")">@review.CreatedAt.ToString("MMM d, yyyy")</time>
+                                    </div>
+                                </header>
+
+                                <div class="profile-review-content">
+                                    <strong>@review.JobTitle</strong>
+                                    <p>@(string.IsNullOrWhiteSpace(review.Comment) ? "No written feedback was provided." : review.Comment)</p>
+                                </div>
+
+                                @if (visibleSkills.Length > 0)
+                                {
+                                    <footer class="profile-review-skills" aria-label="Project skills">
+                                        @foreach (var skill in visibleSkills)
+                                        {
+                                            <span>@skill</span>
+                                        }
+                                        @if (remainingSkillCount > 0)
+                                        {
+                                            <span>+@remainingSkillCount more</span>
+                                        }
+                                    </footer>
+                                }
+                            </article>
+                        }
+                    </div>
+                    <div id="review-filter-empty" class="profile-empty-state" hidden>
+                        <strong>No matching reviews</strong>
+                        <span>Try selecting a different rating.</span>
+                    </div>
+                }
+            </section>
         </div>
 
         <div class="col-lg-4 col-xl-3 profile-sidebar">
             <aside class="profile-panel profile-contact">
-                <span class="profile-kicker">Account details</span>
-                <h2>Contact</h2>
+                <span class="profile-kicker">Profile details</span>
+                <h2>@(Model.IsOwnProfile ? "Contact" : "About")</h2>
 
                 <dl>
-                    <div>
-                        <dt>Email</dt>
-                        <dd><a href="mailto:@profile.Email">@profile.Email</a></dd>
-                    </div>
+                    @if (Model.IsOwnProfile)
+                    {
+                        <div>
+                            <dt>Email</dt>
+                            <dd><a href="mailto:@profile.Email">@profile.Email</a></dd>
+                        </div>
+                    }
                     <div>
                         <dt>Username</dt>
                         <dd>@@@profile.Username</dd>
@@ -282,7 +388,10 @@
                     </div>
                 </dl>
 
-                <a class="profile-contact-button" href="mailto:@profile.Email">Email @profile.FirstName</a>
+                @if (Model.IsOwnProfile)
+                {
+                    <a class="profile-contact-button" href="mailto:@profile.Email">Email @profile.FirstName</a>
+                }
 
                 @if (hasPortfolioUrl)
                 {
@@ -336,6 +445,45 @@
                     }, { once: true });
                     bootstrap.Modal.getOrCreateInstance(modalElement).show();
                 }
+            }
+
+            const reviewList = document.getElementById("profile-review-list");
+            const ratingFilter = document.getElementById("review-rating-filter");
+            const reviewSort = document.getElementById("review-sort");
+            const reviewFilterEmpty = document.getElementById("review-filter-empty");
+
+            if (reviewList && ratingFilter && reviewSort && reviewFilterEmpty) {
+                const reviewCards = Array.from(reviewList.querySelectorAll(".profile-review-card"));
+
+                const updateReviews = () => {
+                    const selectedRating = ratingFilter.value;
+                    const sortOrder = reviewSort.value;
+
+                    reviewCards.sort((left, right) => {
+                        const leftRating = Number(left.dataset.rating);
+                        const rightRating = Number(right.dataset.rating);
+                        const leftDate = Date.parse(left.dataset.date);
+                        const rightDate = Date.parse(right.dataset.date);
+
+                        if (sortOrder === "oldest") return leftDate - rightDate;
+                        if (sortOrder === "highest") return rightRating - leftRating || rightDate - leftDate;
+                        if (sortOrder === "lowest") return leftRating - rightRating || rightDate - leftDate;
+                        return rightDate - leftDate;
+                    });
+
+                    let visibleCount = 0;
+                    reviewCards.forEach(card => {
+                        const isVisible = selectedRating === "all" || card.dataset.rating === selectedRating;
+                        card.hidden = !isVisible;
+                        if (isVisible) visibleCount++;
+                        reviewList.appendChild(card);
+                    });
+
+                    reviewFilterEmpty.hidden = visibleCount > 0;
+                };
+
+                ratingFilter.addEventListener("change", updateReviews);
+                reviewSort.addEventListener("change", updateReviews);
             }
         })();
     </script>
