@@ -1,8 +1,10 @@
 using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
+using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using FreelanceHub.Infrastructure.DataBase;
+using Microsoft.EntityFrameworkCore;
 
 namespace FreelanceHub.Application.Services.Implementations
 {
@@ -95,6 +97,34 @@ namespace FreelanceHub.Application.Services.Implementations
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(int.Parse);
         }
+
+
+
+        public async Task<IEnumerable<Job>> GetJobsByClientIdAsync(int clientId, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Jobs
+                .Where(job => job.ClientUserId == clientId)
+                .Include(j => j.JobCategories)
+                    .ThenInclude(jc => jc.Category)
+                .Include(j => j.JobSkills)
+                    .ThenInclude(js => js.Skill)
+                .Include(j => j.JobTags)
+                    .ThenInclude(jt => jt.Tag)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Job>> GetAllJOpeningJobsAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Jobs.Where(job => job.JobStatus == JobStatus.Open)
+                .Include(j => j.JobCategories)
+                    .ThenInclude(jc => jc.Category)
+                .Include(j => j.JobSkills)
+                    .ThenInclude(js => js.Skill)
+                .Include(j => j.JobTags)
+                    .ThenInclude(jt => jt.Tag)
+                .ToListAsync(cancellationToken);
+        }
+
         private void AssignJobAttributes(CreateJobRequest request, Job job)
         {
             _dbContext.JobCategories.AddRange(
@@ -120,6 +150,19 @@ namespace FreelanceHub.Application.Services.Implementations
                         JobId = job.JobId,
                         SkillId = id
                     }));
+        }
+        public async Task<Job?> GetJobByIdAsync(int jobId, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Jobs
+                .Include(j => j.JobCategories)
+                    .ThenInclude(jc => jc.Category)
+                .Include(j => j.JobSkills)
+                    .ThenInclude(js => js.Skill)
+                .Include(j => j.JobTags)
+                    .ThenInclude(jt => jt.Tag)
+                .Include(j => j.JobAttachments)
+                    .ThenInclude(ja => ja.Attachment)
+                .FirstOrDefaultAsync(j => j.JobId == jobId, cancellationToken);
         }
     }
 }

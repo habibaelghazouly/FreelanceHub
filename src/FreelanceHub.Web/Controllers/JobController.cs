@@ -64,7 +64,7 @@ namespace FreelanceHub.Web.Controllers
                 throw;
             }
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("MyJobs");
         }
         public CreateJobRequest ToCreateJobRequest(CreateJobViewModel model, int userId)
         {
@@ -106,11 +106,33 @@ namespace FreelanceHub.Web.Controllers
             };
         }
 
-        public IActionResult Index()
+        [Authorize(Roles = "Client")]
+        public async Task<IActionResult> MyJobs()
         {
-            return View();
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var jobs = await _jobService.GetJobsByClientIdAsync(userId);
+
+            return View(jobs);
         }
 
+        public async Task<IActionResult> Index()
+        {
+            var jobs = await _jobService.GetAllJOpeningJobsAsync();
 
+            return View(jobs);
+        }
+
+        public async Task<IActionResult> DetailJob(int id)
+        {
+            var job = await _jobService.GetJobByIdAsync(id);
+
+            if (job == null)
+            {
+                return NotFound();
+            }
+
+            return View(job);
+        }
     }
 }

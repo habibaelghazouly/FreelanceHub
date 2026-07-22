@@ -1,0 +1,236 @@
+@model FreelanceHub.Domain.Models.Job
+
+@{
+    ViewData["Title"] = "Job Details";
+}
+
+<div class="container py-4">
+
+    <div class="row">
+
+        <!-- Main Content -->
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+                            <h2>@Model.Title</h2>
+
+                            <span class="badge bg-success">
+                                @Model.JobStatus
+                            </span>
+                        </div>
+
+                        <div class="text-end">
+                            <h4 class="text-primary mb-0">
+                                @Model.Budget.ToString("C")
+                            </h4>
+                            <small class="text-muted">Budget</small>
+                        </div>
+
+                    </div>
+
+                    <hr />
+
+                    <h5>Description</h5>
+
+                    <p class="text-muted" style="white-space:pre-line">
+                        @Model.Description
+                    </p>
+
+                </div>
+            </div>
+
+            <!-- Categories -->
+            @if (Model.JobCategories.Any())
+            {
+                <div class="card shadow-sm mb-3">
+
+                    <div class="card-header">
+                        Categories
+                    </div>
+
+                    <div class="card-body">
+
+                        @foreach (var category in Model.JobCategories)
+                        {
+                            <span class="badge bg-primary me-2 mb-2">
+                                @category.Category.Name
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+            <!-- Skills -->
+            @if (Model.JobSkills.Any())
+            {
+                <div class="card shadow-sm mb-3">
+
+                    <div class="card-header">
+                        Required Skills
+                    </div>
+
+                    <div class="card-body">
+
+                        @foreach (var skill in Model.JobSkills)
+                        {
+                            <span class="badge bg-secondary me-2 mb-2">
+                                @skill.Skill.Name
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+            <!-- Tags -->
+            @if (Model.JobTags.Any())
+            {
+                <div class="card shadow-sm mb-3">
+
+                    <div class="card-header">
+                        Tags
+                    </div>
+
+                    <div class="card-body">
+
+                        @foreach (var tag in Model.JobTags)
+                        {
+                            <span class="badge bg-info text-dark me-2 mb-2">
+                                @tag.Tag.Name
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+            <!-- Attachments -->
+            @if (Model.JobAttachments.Any())
+            {
+                <div class="card shadow-sm">
+
+                    <div class="card-header">
+                        Attachments
+                    </div>
+
+                    <div class="list-group list-group-flush">
+
+                        @foreach (var attachment in Model.JobAttachments)
+                        {
+                            <a href="@attachment.Attachment.FileUrl" target="_blank"
+                               class="list-group-item list-group-item-action d-flex justify-content-between">
+
+                                <span>
+                                    📎 @attachment.Attachment.OriginalFileName
+                                </span>
+
+                                <span class="text-muted">
+                                    @(attachment.Attachment.FileSize / 1024) KB
+                                </span>
+
+                            </a>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm mb-3">
+
+                <div class="card-header">
+                    Job Information
+                </div>
+
+                <div class="card-body">
+
+                    <dl class="row">
+
+                        <dt class="col-6">
+                            Budget
+                        </dt>
+
+                        <dd class="col-6">
+                            @Model.Budget.ToString("C")
+                        </dd>
+
+                        <dt class="col-6">
+                            Deadline
+                        </dt>
+
+                        <dd class="col-6">
+                            @Model.Deadline.ToShortDateString()
+                        </dd>
+
+                        <dt class="col-6">
+                            Status
+                        </dt>
+
+                        <dd class="col-6">
+                            @Model.JobStatus
+                        </dd>
+
+                        <dt class="col-6">
+                            Posted
+                        </dt>
+
+                        <dd class="col-6">
+                            @Model.CreatedAt.ToShortDateString()
+                        </dd>
+
+                    </dl>
+
+                </div>
+
+            </div>
+
+            <div class="d-grid gap-2">
+
+                @if (User.IsInRole("Freelancer"))
+                {
+                    <a asp-controller="Application" asp-action="submitApplication" asp-route-jobId="@Model.JobId"
+                       class="btn btn-success">
+                        Submit Application
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Back to Jobs
+                    </a>
+                }
+
+                @if (User.IsInRole("Client") && Model.ClientUserId ==
+                int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value))
+                {
+
+                    
+                    <a asp-action="Applications" asp-route-id="@Model.JobId" class="btn btn-primary">
+                        View Applications
+                    </a>
+                    <a asp-action="MyJobs" class="btn btn-outline-secondary">
+                        Back to Jobs
+                    </a>
+
+                }
+
+               
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
