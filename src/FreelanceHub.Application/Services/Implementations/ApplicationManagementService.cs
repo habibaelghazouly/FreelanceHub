@@ -66,16 +66,20 @@ namespace FreelanceHub.Application.Services.Implementations
                 ProposedAmount = request.ProposedAmount,
                 CoverLetter = request.CoverLetter.Trim(),
                 TimelineDays = request.TimelineDays,
-                ApplicationStatus = ApplicationStatus.Submitted
+                ApplicationStatus = ApplicationStatus.Submitted,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
             {
+                // 1. First save the Application so we have a valid ApplicationId
                 await _applicationRepository.AddAsync(application, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+                // 2. Process and save attachments & join entity
                 foreach (var portfolioFile in request.PortfolioFiles)
                 {
                     var upload = await _fileUploadService.UploadPortfolioFileAsync(portfolioFile, PortfolioUploadsFolder, cancellationToken);
@@ -91,9 +95,11 @@ namespace FreelanceHub.Application.Services.Implementations
                         FileSize = upload.FileSize
                     };
 
+                    // Add Attachment to DB
                     await _attachmentRepository.AddAsync(attachment, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+                    // Add join relationship using navigation properties rather than raw IDs
                     application.ApplicationAttachments.Add(new ApplicationAttachment
                     {
                         ApplicationId = application.ApplicationId,
@@ -101,7 +107,12 @@ namespace FreelanceHub.Application.Services.Implementations
                     });
                 }
 
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                // 3. Save join entity changes and commit transaction
+                if (request.PortfolioFiles.Count > 0)
+                {
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                }
+
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
                 return ApplicationActionResult.Success();
             }
@@ -125,87 +136,6 @@ namespace FreelanceHub.Application.Services.Implementations
                 await RollbackAndCleanupUploadsAsync(uploadedPortfolioFiles, cancellationToken);
                 return ApplicationActionResult.Failed("Unable to process your application at this moment. Please try again.");
             }
-        }
-
-        public async Task<FreelancerApplicationDashboardResult> GetFreelancerDashboardAsync(int freelancerUserId, CancellationToken cancellationToken = default)
-        {
-            var applications = await _applicationRepository.ListByFreelancerUserIdAsync(freelancerUserId, cancellationToken);
-
-            return new FreelancerApplicationDashboardResult
-            {
-                Applications = applications.Select(application => new FreelancerApplicationListItemResult
-                {
-                    ApplicationId = application.ApplicationId,
-                    JobId = application.JobId,
-                    JobTitle = application.Job.Title,
-                    ProposedAmount = application.ProposedAmount,
-                    TimelineDays = application.TimelineDays,
-                    ApplicationStatus = application.ApplicationStatus,
-                    PortfolioItemCount = application.ApplicationAttachments.Count,
-                    CreatedAt = application.CreatedAt
-                }).ToArray(),
-            };
-        }
-
-        public async Task<ClientApplicationDashboardResult> GetClientDashboardAsync(int clientUserId, CancellationToken cancellationToken = default)
-        {
-            var applications = await _applicationRepository.ListByClientUserIdAsync(clientUserId, cancellationToken);
-
-            return new ClientApplicationDashboardResult
-            {
-                Applications = applications.Select(application => new ClientApplicationListItemResult
-                {
-                    ApplicationId = application.ApplicationId,
-                    JobId = application.JobId,
-                    JobTitle = application.Job.Title,
-                    FreelancerUserId = application.FreelancerUserId,
-                    FreelancerDisplayName = $"{application.FreelancerUser.FirstName} {application.FreelancerUser.LastName}".Trim(),
-                    ProposedAmount = application.ProposedAmount,
-                    TimelineDays = application.TimelineDays,
-                    ApplicationStatus = application.ApplicationStatus,
-                    SubmittedAt = application.CreatedAt
-                }).ToArray()
-            };
-        }
-
-        public async Task<ApplicationActionResult> UpdateApplicationStatusAsync(UpdateApplicationStatusRequest request, CancellationToken cancellationToken = default)
-        {
-            if (!AllowedClientStatuses.Contains(request.ApplicationStatus))
-            {
-                return ApplicationActionResult.Failed("Invalid status update.");
-            }
-
-            var application = await _applicationRepository.GetByIdForClientAsync(request.ApplicationId, request.ClientUserId, cancellationToken);
-            if (application is null)
-            {
-                return ApplicationActionResult.Failed("The selected application was not found.");
-            }
-
-            if (application.ApplicationStatus == request.ApplicationStatus)
-            {
-                return ApplicationActionResult.Success();
-            }
-
-            if (application.ApplicationStatus is ApplicationStatus.Accepted or ApplicationStatus.Rejected)
-            {
-                return ApplicationActionResult.Failed("Finalized applications cannot be changed.");
-            }
-
-
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
-            try
-            { 
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
-            }
-            catch (DbUpdateException)
-            {
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                return ApplicationActionResult.Failed("Unable to update the application status right now. Please try again.");
-            }
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            return ApplicationActionResult.Success();
         }
 
         private static List<string> ValidateSubmitRequest(SubmitApplicationRequest request)
