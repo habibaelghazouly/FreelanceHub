@@ -67,20 +67,26 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <strong>Budget</strong><br />
                                     @job.Budget.ToString("C")
                                 </div>
 
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <strong>Deadline</strong><br />
                                     @job.Deadline.ToShortDateString()
                                 </div>
 
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <strong>Status</strong><br />
                                     <span class="badge bg-success">
                                         @job.JobStatus
+                                    </span>
+                                </div>
+                                 <div class="col-md-3">
+                                    <strong>No of Applications</strong><br />
+                                    <span class="badge bg-success">
+                                        @job.Applications.Count()
                                     </span>
                                 </div>
                             </div>
