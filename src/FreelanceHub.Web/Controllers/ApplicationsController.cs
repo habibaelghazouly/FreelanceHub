@@ -30,7 +30,6 @@ namespace FreelanceHub.Web.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Freelancer")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(SubmitApplicationViewModel model)
         {
             if (!TryGetCurrentUserId(out var freelancerUserId))
@@ -75,7 +74,7 @@ namespace FreelanceHub.Web.Controllers
                 }
 
                 TempData["SuccessMessage"] = "Application submitted successfully.";
-                return RedirectToAction(nameof(MyApplications));
+                return RedirectToAction("Index" , "Home");
             }
             finally
             {
@@ -84,88 +83,6 @@ namespace FreelanceHub.Web.Controllers
                     stream.Dispose();
                 }
             }
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Freelancer")]
-        public async Task<IActionResult> MyApplications()
-        {
-            if (!TryGetCurrentUserId(out var freelancerUserId))
-            {
-                return Forbid();
-            }
-
-            var dashboard = await _applicationManagementService.GetFreelancerDashboardAsync(freelancerUserId, HttpContext.RequestAborted);
-            return View(new FreelancerApplicationDashboardViewModel
-            {
-                Applications = dashboard.Applications.Select(item => new FreelancerApplicationItemViewModel
-                {
-                    ApplicationId = item.ApplicationId,
-                    JobId = item.JobId,
-                    JobTitle = item.JobTitle,
-                    ProposedAmount = item.ProposedAmount,
-                    TimelineDays = item.TimelineDays,
-                    ApplicationStatus = item.ApplicationStatus,
-                    PortfolioItemCount = item.PortfolioItemCount,
-                    SubmittedAt = item.CreatedAt
-                }).ToArray()
-            });
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Client")]
-        public async Task<IActionResult> Review()
-        {
-            if (!TryGetCurrentUserId(out var clientUserId))
-            {
-                return Forbid();
-            }
-
-            var dashboard = await _applicationManagementService.GetClientDashboardAsync(clientUserId, HttpContext.RequestAborted);
-            return View(new ClientApplicationDashboardViewModel
-            {
-                Applications = dashboard.Applications.Select(item => new ClientApplicationItemViewModel
-                {
-                    ApplicationId = item.ApplicationId,
-                    JobId = item.JobId,
-                    JobTitle = item.JobTitle,
-                    FreelancerUserId = item.FreelancerUserId,
-                    FreelancerDisplayName = item.FreelancerDisplayName,
-                    ProposedAmount = item.ProposedAmount,
-                    TimelineDays = item.TimelineDays,
-                    ApplicationStatus = item.ApplicationStatus,
-                    SubmittedAt = item.SubmittedAt
-                }).ToArray()
-            });
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Client")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStatus(int applicationId, ApplicationStatus applicationStatus)
-        {
-            if (!TryGetCurrentUserId(out var clientUserId))
-            {
-                return Forbid();
-            }
-
-            var result = await _applicationManagementService.UpdateApplicationStatusAsync(new UpdateApplicationStatusRequest
-            {
-                ApplicationId = applicationId,
-                ClientUserId = clientUserId,
-                ApplicationStatus = applicationStatus
-            }, HttpContext.RequestAborted);
-
-            if (result.Succeeded)
-            {
-                TempData["SuccessMessage"] = "Application status updated.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = string.Join(" ", result.Errors);
-            }
-
-            return RedirectToAction(nameof(Review));
         }
 
         private bool TryGetCurrentUserId(out int userId)
