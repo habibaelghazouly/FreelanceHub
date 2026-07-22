@@ -11,7 +11,7 @@
                 <h1 class="h3 mb-3">Create Job</h1>
                 <p class="text-muted mb-4">Fill in the details to create a new job posting.</p>
 
-                <form asp-action="Create" method="post">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
                     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
@@ -42,7 +42,7 @@
                     <div class="mb-3">
                         <label class="form-label">Categories</label>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-primary" 
+                            <button type="button" class="btn btn-outline-primary"
                                     onclick="openSelectModal('categoryModal', 'category', handleCategorySelection)">
                                 Select Categories
                             </button>
@@ -58,7 +58,7 @@
                     <div class="mb-3">
                         <label class="form-label">Tags</label>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-primary" 
+                            <button type="button" class="btn btn-outline-primary"
                                     onclick="openSelectModal('tagModal', 'tag', handleTagSelection)">
                                 Select Tags
                             </button>
@@ -74,7 +74,7 @@
                     <div class="mb-3">
                         <label class="form-label">Required Skills</label>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-primary" 
+                            <button type="button" class="btn btn-outline-primary"
                                     onclick="openSelectModal('skillModal', 'skill', handleSkillSelection)">
                                 Select Skills
                             </button>
@@ -85,68 +85,76 @@
                         </div>
                         <input type="hidden" asp-for="SkillIds" id="skillIds" />
                     </div>
+                    <div class="mb-3">
+                        <label asp-for="JobFiles" class="form-label"></label>
+                        <input asp-for="JobFiles" class="form-control" type="file" multiple
+                               accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" />
+                        <span asp-validation-for="JobFiles" class="text-danger"></span>
+                        <div class="form-text">Upload up to 10 files. Allowed types: PDF, JPG, PNG, GIF, WEBP. Maximum
+                            size: 10 MB per file.</div>
+                        </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Create Job</button>
-                </form>
+                        <button type="submit" class="btn btn-primary w-100">Create Job</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Include the Modal Partials -->
-@{
-    SelectItemsModalViewModel? categoryModal = new SelectItemsModalViewModel 
-    { 
-        ModalId = "categoryModal",
-        Title = "Select Categories",
-        ItemType = "category",
-        Items = (IEnumerable<SelectableItem>)ViewBag.Categories ?? new List<SelectableItem>()
-    };
-    
-    SelectItemsModalViewModel? tagModal = new SelectItemsModalViewModel 
-    { 
-        ModalId = "tagModal",
-        Title = "Select Tags",
-        ItemType = "tag",
-        Items = (IEnumerable<SelectableItem>)ViewBag.Tags ?? new List<SelectableItem>()
-    };
-    
-    SelectItemsModalViewModel?  skillModal = new SelectItemsModalViewModel 
-    { 
-        ModalId = "skillModal",
-        Title = "Select Required Skills",
-        ItemType = "skill",
-        Items = (IEnumerable<SelectableItem>)ViewBag.Skills ?? new List<SelectableItem>()
-    };
-}
+    <!-- Include the Modal Partials -->
+    @{
+        SelectItemsModalViewModel? categoryModal = new SelectItemsModalViewModel
+        {
+            ModalId = "categoryModal",
+            Title = "Select Categories",
+            ItemType = "category",
+            Items = (IEnumerable<SelectableItem>)ViewBag.Categories ?? new List<SelectableItem>()
+        };
 
-<partial name="_SelectItemsModal" model="categoryModal" />
-<partial name="_SelectItemsModal" model="tagModal" />
-<partial name="_SelectItemsModal" model="skillModal" />
+        SelectItemsModalViewModel? tagModal = new SelectItemsModalViewModel
+        {
+            ModalId = "tagModal",
+            Title = "Select Tags",
+            ItemType = "tag",
+            Items = (IEnumerable<SelectableItem>)ViewBag.Tags ?? new List<SelectableItem>()
+        };
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script src="~/js/selectItemsModal.js"></script>
-    <script>
-        // Handler for category selection
-        function handleCategorySelection(ids, names) {
+        SelectItemsModalViewModel? skillModal = new SelectItemsModalViewModel
+        {
+            ModalId = "skillModal",
+            Title = "Select Required Skills",
+            ItemType = "skill",
+            Items = (IEnumerable<SelectableItem>)ViewBag.Skills ?? new List<SelectableItem>()
+        };
+    }
+
+    <partial name="_SelectItemsModal" model="categoryModal" />
+    <partial name="_SelectItemsModal" model="tagModal" />
+    <partial name="_SelectItemsModal" model="skillModal" />
+
+    @section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+        <script src="~/js/selectItemsModal.js"></script>
+        <script>
+            // Handler for category selection
+            function handleCategorySelection(ids, names) {
             document.getElementById('categoryList').textContent = names.length > 0 ? names.join(', ') : 'None selected';
             document.getElementById('categoriesCount').textContent = `(${ids.length} selected)`;
             document.getElementById('categoryIds').value = ids.join(',');
-        }
+            }
 
-        // Handler for tag selection
-        function handleTagSelection(ids, names) {
+            // Handler for tag selection
+            function handleTagSelection(ids, names) {
             document.getElementById('tagList').textContent = names.length > 0 ? names.join(', ') : 'None selected';
             document.getElementById('tagsCount').textContent = `(${ids.length} selected)`;
             document.getElementById('tagIds').value = ids.join(',');
-        }
+            }
 
-        // Handler for skill selection
-        function handleSkillSelection(ids, names) {
+            // Handler for skill selection
+            function handleSkillSelection(ids, names) {
             document.getElementById('skillList').textContent = names.length > 0 ? names.join(', ') : 'None selected';
             document.getElementById('skillsCount').textContent = `(${ids.length} selected)`;
             document.getElementById('skillIds').value = ids.join(',');
-        }
-    </script>
-}
+            }
+        </script>
+    }

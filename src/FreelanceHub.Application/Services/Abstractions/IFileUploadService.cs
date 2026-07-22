@@ -9,6 +9,7 @@ namespace FreelanceHub.Application.Services.Abstractions
 
         Task<FileUploadResult> UploadPortfolioFileAsync(UploadedFileRequest file, string folderName, CancellationToken cancellationToken = default);
 
+        Task<FileUploadResult> UploadJobFileAsync(UploadedFileRequest file, string folderName, CancellationToken cancellationToken = default);
         Task DeleteAsync(string storageKey);
     }
 }

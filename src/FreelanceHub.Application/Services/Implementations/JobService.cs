@@ -10,10 +10,12 @@ namespace FreelanceHub.Application.Services.Implementations
     {
 
         private readonly ApplicationDbContext _dbContext;
+        private readonly IFileUploadService _fileUploadService;
 
-        public JobService(ApplicationDbContext dbContext)
+        public JobService(ApplicationDbContext dbContext, IFileUploadService fileUploadService)
         {
             _dbContext = dbContext;
+            _fileUploadService = fileUploadService;
         }
 
         public async Task<CreateJobResult> CreateJobAsync(
@@ -40,10 +42,10 @@ namespace FreelanceHub.Application.Services.Implementations
 
                 AssignJobAttributes(request, job);
 
+                await UploadJobFiles(request, job, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
                 await transaction.CommitAsync(cancellationToken);
-
                 return new CreateJobResult
                 {
                     Succeeded = true,
@@ -57,29 +59,67 @@ namespace FreelanceHub.Application.Services.Implementations
             }
         }
 
+        private async Task UploadJobFiles(CreateJobRequest request, Job job, CancellationToken cancellationToken)
+        {
+            foreach (var file in request.JobFiles)
+            {
+                var uploadedFile = await _fileUploadService.UploadJobFileAsync(file, "job-files", cancellationToken);
+                var attachment = new Attachment
+                {
+                    UploadedByUserId = request.ClientId,
+                    OriginalFileName = uploadedFile.OriginalFileName,
+                    StoredFileName = uploadedFile.StoredFileName,
+                    FileUrl = uploadedFile.FileUrl,
+                    ContentType = uploadedFile.ContentType,
+                    FileSize = uploadedFile.FileSize
+                };
+                _dbContext.Attachments.Add(attachment);
+
+                var jobAttachment = new JobAttachment
+                {
+                    JobId = job.JobId,
+                    Attachment = attachment
+                };
+                _dbContext.JobAttachments.Add(jobAttachment);
+
+
+            }
+        }
+
+        private static IEnumerable<int> ParseIds(string? ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids))
+                return Enumerable.Empty<int>();
+
+            return ids
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(int.Parse);
+        }
         private void AssignJobAttributes(CreateJobRequest request, Job job)
         {
-
             _dbContext.JobCategories.AddRange(
-                request.CategoryIds.Split(',').Select(id => new JobCategory
-                {
-                    JobId = job.JobId,
-                    CategoryId = int.Parse(id)
-                }));
+                ParseIds(request.CategoryIds)
+                    .Select(id => new JobCategory
+                    {
+                        JobId = job.JobId,
+                        CategoryId = id
+                    }));
 
             _dbContext.JobTags.AddRange(
-                request.TagIds.Split(',').Select(id => new JobTag
-                {
-                    JobId = job.JobId,
-                    TagId = int.Parse(id)
-                }));
+                ParseIds(request.TagIds)
+                    .Select(id => new JobTag
+                    {
+                        JobId = job.JobId,
+                        TagId = id
+                    }));
 
             _dbContext.JobSkills.AddRange(
-                request.SkillIds.Split(',').Select(id => new JobSkill
-                {
-                    JobId = job.JobId,
-                    SkillId = int.Parse(id)
-                }));
+                ParseIds(request.SkillIds)
+                    .Select(id => new JobSkill
+                    {
+                        JobId = job.JobId,
+                        SkillId = id
+                    }));
         }
     }
 }

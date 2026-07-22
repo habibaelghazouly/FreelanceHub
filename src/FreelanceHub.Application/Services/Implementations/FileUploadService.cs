@@ -66,6 +66,19 @@ namespace FreelanceHub.Application.Services.Implementations
                 cancellationToken);
         }
 
+        public Task<FileUploadResult> UploadJobFileAsync(UploadedFileRequest file, string folderName, CancellationToken cancellationToken = default)
+        {
+            return UploadFileAsync(
+                file,
+                folderName,
+                AllowedPortfolioExtensions,
+                AllowedPortfolioContentTypes,
+                MaxPortfolioFileSizeBytes,
+                "Job files must be 10 MB or smaller.",
+                "Only PDF, JPG, PNG, WEBP, and GIF files are allowed for job uploads.",
+                cancellationToken);
+        }
+
         public Task<FileUploadResult> UploadImageAsync(UploadedFileRequest file, string folderName, CancellationToken cancellationToken = default)
         {
             return UploadFileAsync(
