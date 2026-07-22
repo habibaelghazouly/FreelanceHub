@@ -85,6 +85,33 @@ namespace FreelanceHub.Web.Controllers
             }
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Freelancer")]
+        public async Task<IActionResult> MyApplications()
+        {
+            if (!TryGetCurrentUserId(out var freelancerUserId))
+            {
+                return Forbid();
+            }
+
+            var dashboard = await _applicationManagementService.GetFreelancerDashboardAsync(freelancerUserId, HttpContext.RequestAborted);
+
+            return View(new FreelancerApplicationDashboardViewModel
+            {
+                Applications = dashboard.Applications.Select(item => new FreelancerApplicationItemViewModel
+                {
+                    ApplicationId = item.ApplicationId,
+                    JobId = item.JobId,
+                    JobTitle = item.JobTitle,
+                    ProposedAmount = item.ProposedAmount,
+                    TimelineDays = item.TimelineDays,
+                    ApplicationStatus = item.ApplicationStatus,
+                    PortfolioItemCount = item.PortfolioItemCount,
+                    SubmittedAt = item.CreatedAt
+                }).ToArray()
+            });
+        }
+
         private bool TryGetCurrentUserId(out int userId)
         {
             var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
