@@ -61,10 +61,10 @@ public class JobsController : Controller
             TotalCount = totalCount,
             Jobs = jobs,
             Categories = await _dbContext.Categories.AsNoTracking()
-                .Select(category => new SelectListItem(category.Name, category.Id.ToString()))
+                .Select(category => new SelectListItem(category.Name, category.CategoryId.ToString()))
                 .ToListAsync(),
             Skills = await _dbContext.Skills.AsNoTracking()
-                .Select(skill => new SelectListItem(skill.Name, skill.Id.ToString()))
+                .Select(skill => new SelectListItem(skill.Name, skill.SkillId.ToString()))
                 .ToListAsync()
         };
 
