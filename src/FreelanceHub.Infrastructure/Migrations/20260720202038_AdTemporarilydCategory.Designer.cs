@@ -4,6 +4,7 @@ using FreelanceHub.Infrastructure.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FreelanceHub.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260720202038_AdTemporarilydCategory")]
+    partial class AdTemporarilydCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,67 +24,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Application", b =>
-                {
-                    b.Property<int>("ApplicationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("application_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApplicationId"));
-
-                    b.Property<int>("ApplicationStatus")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(50)
-                        .HasColumnName("application_status");
-
-                    b.Property<string>("CoverLetter")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("cover_letter");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
-
-                    b.Property<int>("FreelancerUserId")
-                        .HasColumnType("int")
-                        .HasColumnName("freelancer_user_id");
-
-                    b.Property<int>("JobId")
-                        .HasColumnType("int")
-                        .HasColumnName("job_id");
-
-                    b.Property<decimal>("ProposedAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("proposed_amount");
-
-                    b.Property<int>("TimelineDays")
-                        .HasColumnType("int")
-                        .HasColumnName("timeline_days");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
-
-                    b.HasKey("ApplicationId");
-
-                    b.HasIndex("FreelancerUserId");
-
-                    b.HasIndex("JobId");
-
-                    b.ToTable("applications", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_applications_status", "[application_status] IN (50, 51, 52, 53, 54)");
-                        });
-                });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
                 {
@@ -120,7 +62,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -185,7 +127,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -194,9 +136,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnName("username");
 
                     b.Property<int>("UserStatus")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasDefaultValue(10)
                         .HasColumnName("user_status");
 
                     b.HasKey("Id");
@@ -213,10 +153,7 @@ namespace FreelanceHub.Infrastructure.Migrations
 
                     b.HasIndex("ProfileImageAttachmentId");
 
-                    b.ToTable("users", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_users_status", "[user_status] IN (10, 11, 12, 13)");
-                        });
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUserRole", b =>
@@ -233,7 +170,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("assigned_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -281,7 +218,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("uploaded_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<int>("UploadedByUserId")
                         .HasColumnType("int")
@@ -291,20 +228,17 @@ namespace FreelanceHub.Infrastructure.Migrations
 
                     b.HasIndex("UploadedByUserId");
 
-                    b.ToTable("attachments", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_attachments_file_size", "[file_size] IS NULL OR [file_size] >= 0");
-                        });
+                    b.ToTable("attachments", (string)null);
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Category", b =>
                 {
-                    b.Property<int>("CategoryId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("category_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -312,37 +246,34 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
-                    b.HasKey("CategoryId");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasKey("Id");
 
                     b.ToTable("categories", (string)null);
 
                     b.HasData(
                         new
                         {
-                            CategoryId = 1,
+                            Id = 1,
                             Name = "Web Development"
                         },
                         new
                         {
-                            CategoryId = 2,
+                            Id = 2,
                             Name = "Mobile Development"
                         },
                         new
                         {
-                            CategoryId = 3,
+                            Id = 3,
                             Name = "UI / UX Design"
                         },
                         new
                         {
-                            CategoryId = 4,
+                            Id = 4,
                             Name = "Writing"
                         },
                         new
                         {
-                            CategoryId = 5,
+                            Id = 5,
                             Name = "Marketing"
                         });
                 });
@@ -356,13 +287,8 @@ namespace FreelanceHub.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClientProfileId"));
 
-                    b.Property<int>("ClientType")
-                        .HasColumnType("int")
-                        .HasColumnName("client_type");
-
                     b.Property<string>("CompanyDescription")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("company_description");
 
                     b.Property<int?>("CompanyLogoAttachmentId")
@@ -383,13 +309,12 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
-                    b.Property<decimal>("RatingAverage")
+                    b.Property<int>("RatingAverage")
                         .ValueGeneratedOnAdd()
-                        .HasPrecision(3, 2)
-                        .HasColumnType("decimal(3,2)")
-                        .HasDefaultValue(0m)
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
                         .HasColumnName("rating_averge");
 
                     b.Property<int>("RatingCount")
@@ -402,7 +327,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int")
@@ -415,12 +340,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("client_profiles", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_client_profiles_company_details", "[client_type] = 70 OR ([client_type] = 71 AND NULLIF(LTRIM(RTRIM([company_name])), '') IS NOT NULL AND NULLIF(LTRIM(RTRIM([company_description])), '') IS NOT NULL)");
-
-                            t.HasCheckConstraint("chk_client_profiles_type", "[client_type] IN (70, 71)");
-                        });
+                    b.ToTable("client_profiles", (string)null);
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfileAttachment", b =>
@@ -455,10 +375,6 @@ namespace FreelanceHub.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContractId"));
 
-                    b.Property<int>("AcceptedApplicationId")
-                        .HasColumnType("int")
-                        .HasColumnName("accepted_application_id");
-
                     b.Property<DateTime?>("ActualCompletionDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("actual_completion_date");
@@ -468,17 +384,19 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("agreed_amount");
 
-                    b.Property<int>("ContractStatus")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("ApplicationId")
                         .HasColumnType("int")
-                        .HasDefaultValue(60)
+                        .HasColumnName("accepted_application_id");
+
+                    b.Property<int>("ContractStatus")
+                        .HasColumnType("int")
                         .HasColumnName("contract_status");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime?>("ExpectedCompletionDate")
                         .HasColumnType("datetime2")
@@ -492,32 +410,20 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("start_date")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.HasKey("ContractId");
 
                     b.HasIndex("JobId")
                         .IsUnique();
 
-                    b.HasIndex("AcceptedApplicationId", "JobId")
-                        .IsUnique();
-
-                    b.ToTable("contracts", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_contracts_actual_completion", "[actual_completion_date] IS NULL OR [actual_completion_date] >= [start_date]");
-
-                            t.HasCheckConstraint("chk_contracts_agreed_amount", "[agreed_amount] >= 0");
-
-                            t.HasCheckConstraint("chk_contracts_expected_completion", "[expected_completion_date] IS NULL OR [expected_completion_date] >= [start_date]");
-
-                            t.HasCheckConstraint("chk_contracts_status", "[contract_status] IN (60, 61, 62, 63, 64)");
-                        });
+                    b.ToTable("contracts", (string)null);
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ContractAttachment", b =>
@@ -546,24 +452,23 @@ namespace FreelanceHub.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FreelancerProfileId"));
 
-                    b.Property<int>("AvailabilityStatus")
+                    b.Property<int?>("AvailabilityStatus")
                         .HasColumnType("int")
                         .HasColumnName("availability_status");
 
                     b.Property<string>("Bio")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("bio");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
-                    b.Property<int>("ExperienceLevel")
-                        .HasColumnType("int")
+                    b.Property<string>("ExperienceLevel")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
                         .HasColumnName("experience_level");
 
                     b.Property<string>("ExternalPortfolioUrl")
@@ -571,22 +476,20 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnType("nvarchar(500)")
                         .HasColumnName("external_portfolio_url");
 
-                    b.Property<decimal>("HourlyRate")
+                    b.Property<decimal?>("HourlyRate")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("hourly_rate");
 
                     b.Property<string>("ProfessionalTitle")
-                        .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)")
                         .HasColumnName("professional_title");
 
-                    b.Property<decimal>("RatingAverage")
+                    b.Property<int>("RatingAverage")
                         .ValueGeneratedOnAdd()
-                        .HasPrecision(3, 2)
-                        .HasColumnType("decimal(3,2)")
-                        .HasDefaultValue(0m)
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
                         .HasColumnName("rating_averge");
 
                     b.Property<int>("RatingCount")
@@ -599,7 +502,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int")
@@ -610,16 +513,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("freelancer_profiles", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_freelancer_profiles_availability_status", "[availability_status] IN (20, 21, 22)");
-
-                            t.HasCheckConstraint("chk_freelancer_profiles_experience_level", "[experience_level] IN (30, 31, 32)");
-
-                            t.HasCheckConstraint("chk_freelancer_profiles_hourly_rate", "[hourly_rate] > 0");
-
-                            t.HasCheckConstraint("chk_freelancer_profiles_required_details", "NULLIF(LTRIM(RTRIM([professional_title])), '') IS NOT NULL AND LEN(LTRIM(RTRIM([bio]))) >= 20");
-                        });
+                    b.ToTable("freelancer_profiles", (string)null);
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfileAttachment", b =>
@@ -688,7 +582,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("datetime2")
@@ -710,9 +604,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnName("is_deleted");
 
                     b.Property<int>("JobStatus")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasDefaultValue(40)
                         .HasColumnName("job_status");
 
                     b.Property<string>("Title")
@@ -725,7 +617,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.HasKey("JobId");
 
@@ -733,14 +625,7 @@ namespace FreelanceHub.Infrastructure.Migrations
 
                     b.HasIndex("ClientUserId");
 
-                    b.ToTable("jobs", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_jobs_budget", "[budget] >= 0");
-
-                            t.HasCheckConstraint("chk_jobs_deleted_at", "([is_deleted] = 0 AND [deleted_at] IS NULL) OR ([is_deleted] = 1 AND [deleted_at] IS NOT NULL)");
-
-                            t.HasCheckConstraint("chk_jobs_status", "[job_status] IN (40, 41, 42, 43)");
-                        });
+                    b.ToTable("jobs", (string)null);
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.JobAttachment", b =>
@@ -760,23 +645,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("job_attachments", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.JobCategory", b =>
-                {
-                    b.Property<int>("JobId")
-                        .HasColumnType("int")
-                        .HasColumnName("job_id");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int")
-                        .HasColumnName("category_id");
-
-                    b.HasKey("JobId", "CategoryId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("job_categories", (string)null);
-                });
-
             modelBuilder.Entity("FreelanceHub.Domain.Models.JobSkill", b =>
                 {
                     b.Property<int>("JobId")
@@ -794,84 +662,14 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("job_skills", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.JobTag", b =>
-                {
-                    b.Property<int>("JobId")
-                        .HasColumnType("int")
-                        .HasColumnName("job_id");
-
-                    b.Property<int>("TagId")
-                        .HasColumnType("int")
-                        .HasColumnName("tag_id");
-
-                    b.HasKey("JobId", "TagId");
-
-                    b.HasIndex("TagId");
-
-                    b.ToTable("job_tags", (string)null);
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Review", b =>
-                {
-                    b.Property<int>("ReviewId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("review_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewId"));
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("comment");
-
-                    b.Property<int>("ContractId")
-                        .HasColumnType("int")
-                        .HasColumnName("contract_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("SYSUTCDATETIME()");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int")
-                        .HasColumnName("rating");
-
-                    b.Property<int>("RevieweeUserId")
-                        .HasColumnType("int")
-                        .HasColumnName("reviewee_user_id");
-
-                    b.Property<int>("ReviewerUserId")
-                        .HasColumnType("int")
-                        .HasColumnName("reviewer_user_id");
-
-                    b.HasKey("ReviewId");
-
-                    b.HasIndex("RevieweeUserId");
-
-                    b.HasIndex("ReviewerUserId");
-
-                    b.HasIndex("ContractId", "ReviewerUserId")
-                        .IsUnique();
-
-                    b.ToTable("reviews", null, t =>
-                        {
-                            t.HasCheckConstraint("chk_reviews_rating", "[rating] BETWEEN 1 AND 5");
-
-                            t.HasCheckConstraint("chk_reviews_users", "[reviewer_user_id] <> [reviewee_user_id]");
-                        });
-                });
-
             modelBuilder.Entity("FreelanceHub.Domain.Models.Skill", b =>
                 {
-                    b.Property<int>("SkillId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("skill_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SkillId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -879,7 +677,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
-                    b.HasKey("SkillId");
+                    b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -889,254 +687,254 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            SkillId = 1,
+                            Id = 1,
                             Name = "JavaScript"
                         },
                         new
                         {
-                            SkillId = 2,
+                            Id = 2,
                             Name = "TypeScript"
                         },
                         new
                         {
-                            SkillId = 3,
+                            Id = 3,
                             Name = "React"
                         },
                         new
                         {
-                            SkillId = 4,
+                            Id = 4,
                             Name = "Angular"
                         },
                         new
                         {
-                            SkillId = 5,
+                            Id = 5,
                             Name = "Vue.js"
                         },
                         new
                         {
-                            SkillId = 6,
+                            Id = 6,
                             Name = "Node.js"
                         },
                         new
                         {
-                            SkillId = 7,
+                            Id = 7,
                             Name = "ASP.NET Core"
                         },
                         new
                         {
-                            SkillId = 8,
+                            Id = 8,
                             Name = "PHP"
                         },
                         new
                         {
-                            SkillId = 9,
+                            Id = 9,
                             Name = "Laravel"
                         },
                         new
                         {
-                            SkillId = 10,
+                            Id = 10,
                             Name = "Python"
                         },
                         new
                         {
-                            SkillId = 11,
+                            Id = 11,
                             Name = "Django"
                         },
                         new
                         {
-                            SkillId = 12,
+                            Id = 12,
                             Name = "Ruby on Rails"
                         },
                         new
                         {
-                            SkillId = 13,
+                            Id = 13,
                             Name = "WordPress"
                         },
                         new
                         {
-                            SkillId = 14,
+                            Id = 14,
                             Name = "HTML/CSS"
                         },
                         new
                         {
-                            SkillId = 15,
+                            Id = 15,
                             Name = "Swift"
                         },
                         new
                         {
-                            SkillId = 16,
+                            Id = 16,
                             Name = "Kotlin"
                         },
                         new
                         {
-                            SkillId = 17,
+                            Id = 17,
                             Name = "Flutter"
                         },
                         new
                         {
-                            SkillId = 18,
+                            Id = 18,
                             Name = "React Native"
                         },
                         new
                         {
-                            SkillId = 19,
+                            Id = 19,
                             Name = "UI/UX Design"
                         },
                         new
                         {
-                            SkillId = 20,
+                            Id = 20,
                             Name = "Figma"
                         },
                         new
                         {
-                            SkillId = 21,
+                            Id = 21,
                             Name = "Adobe Photoshop"
                         },
                         new
                         {
-                            SkillId = 22,
+                            Id = 22,
                             Name = "Adobe Illustrator"
                         },
                         new
                         {
-                            SkillId = 23,
+                            Id = 23,
                             Name = "Graphic Design"
                         },
                         new
                         {
-                            SkillId = 24,
+                            Id = 24,
                             Name = "Logo Design"
                         },
                         new
                         {
-                            SkillId = 25,
+                            Id = 25,
                             Name = "Content Writing"
                         },
                         new
                         {
-                            SkillId = 26,
+                            Id = 26,
                             Name = "Copywriting"
                         },
                         new
                         {
-                            SkillId = 27,
+                            Id = 27,
                             Name = "Technical Writing"
                         },
                         new
                         {
-                            SkillId = 28,
+                            Id = 28,
                             Name = "Translation"
                         },
                         new
                         {
-                            SkillId = 29,
+                            Id = 29,
                             Name = "Editing & Proofreading"
                         },
                         new
                         {
-                            SkillId = 30,
+                            Id = 30,
                             Name = "SEO"
                         },
                         new
                         {
-                            SkillId = 31,
+                            Id = 31,
                             Name = "Social Media Marketing"
                         },
                         new
                         {
-                            SkillId = 32,
+                            Id = 32,
                             Name = "Email Marketing"
                         },
                         new
                         {
-                            SkillId = 33,
+                            Id = 33,
                             Name = "Google Ads"
                         },
                         new
                         {
-                            SkillId = 34,
+                            Id = 34,
                             Name = "Data Analysis"
                         },
                         new
                         {
-                            SkillId = 35,
+                            Id = 35,
                             Name = "SQL"
                         },
                         new
                         {
-                            SkillId = 36,
+                            Id = 36,
                             Name = "Machine Learning"
                         },
                         new
                         {
-                            SkillId = 37,
+                            Id = 37,
                             Name = "Power BI"
                         },
                         new
                         {
-                            SkillId = 38,
+                            Id = 38,
                             Name = "Docker"
                         },
                         new
                         {
-                            SkillId = 39,
+                            Id = 39,
                             Name = "Kubernetes"
                         },
                         new
                         {
-                            SkillId = 40,
+                            Id = 40,
                             Name = "AWS"
                         },
                         new
                         {
-                            SkillId = 41,
+                            Id = 41,
                             Name = "Azure"
                         },
                         new
                         {
-                            SkillId = 42,
+                            Id = 42,
                             Name = "CI/CD"
                         },
                         new
                         {
-                            SkillId = 43,
+                            Id = 43,
                             Name = "Project Management"
                         },
                         new
                         {
-                            SkillId = 44,
+                            Id = 44,
                             Name = "Virtual Assistance"
                         },
                         new
                         {
-                            SkillId = 45,
+                            Id = 45,
                             Name = "Bookkeeping"
                         },
                         new
                         {
-                            SkillId = 46,
+                            Id = 46,
                             Name = "Video Editing"
                         },
                         new
                         {
-                            SkillId = 47,
+                            Id = 47,
                             Name = "Voice Over"
                         },
                         new
                         {
-                            SkillId = 48,
+                            Id = 48,
                             Name = "Motion Graphics"
                         });
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Tag", b =>
                 {
-                    b.Property<int>("TagId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("tag_id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TagId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1144,52 +942,49 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
-                    b.HasKey("TagId");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasKey("Id");
 
                     b.ToTable("tags", (string)null);
 
                     b.HasData(
                         new
                         {
-                            TagId = 1,
+                            Id = 1,
                             Name = "C#"
                         },
                         new
                         {
-                            TagId = 2,
+                            Id = 2,
                             Name = ".NET"
                         },
                         new
                         {
-                            TagId = 3,
+                            Id = 3,
                             Name = "React"
                         },
                         new
                         {
-                            TagId = 4,
+                            Id = 4,
                             Name = "SQL"
                         },
                         new
                         {
-                            TagId = 5,
+                            Id = 5,
                             Name = "Figma"
                         },
                         new
                         {
-                            TagId = 6,
+                            Id = 6,
                             Name = "SEO"
                         },
                         new
                         {
-                            TagId = 7,
+                            Id = 7,
                             Name = "API"
                         },
                         new
                         {
-                            TagId = 8,
+                            Id = 8,
                             Name = "Content Writing"
                         });
                 });
@@ -1336,40 +1131,13 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Application", b =>
-                {
-                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "FreelancerUser")
-                        .WithMany("Applications")
-                        .HasForeignKey("FreelancerUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FreelanceHub.Domain.Models.Job", "Job")
-                        .WithMany("Applications")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("FreelancerUser");
-
-                    b.Navigation("Job");
-                });
-
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationAttachment", b =>
                 {
-                    b.HasOne("FreelanceHub.Domain.Models.Application", "Application")
-                        .WithMany("ApplicationAttachments")
-                        .HasForeignKey("ApplicationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("FreelanceHub.Domain.Models.Attachment", "Attachment")
                         .WithMany("ApplicationAttachments")
                         .HasForeignKey("AttachmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Application");
 
                     b.Navigation("Attachment");
                 });
@@ -1436,15 +1204,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FreelanceHub.Domain.Models.ClientProfile", "ClientProfile")
-                        .WithMany("ClientProfileAttachments")
-                        .HasForeignKey("ClientProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Attachment");
-
-                    b.Navigation("ClientProfile");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Contract", b =>
@@ -1454,15 +1214,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasForeignKey("FreelanceHub.Domain.Models.Contract", "JobId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
-
-                    b.HasOne("FreelanceHub.Domain.Models.Application", "AcceptedApplication")
-                        .WithOne("Contract")
-                        .HasForeignKey("FreelanceHub.Domain.Models.Contract", "AcceptedApplicationId", "JobId")
-                        .HasPrincipalKey("FreelanceHub.Domain.Models.Application", "ApplicationId", "JobId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("AcceptedApplication");
 
                     b.Navigation("Job");
                 });
@@ -1475,15 +1226,7 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FreelanceHub.Domain.Models.Contract", "Contract")
-                        .WithMany("ContractAttachments")
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Attachment");
-
-                    b.Navigation("Contract");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfile", b =>
@@ -1505,32 +1248,16 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FreelanceHub.Domain.Models.FreelancerProfile", "FreelancerProfile")
-                        .WithMany("FreelancerProfileAttachments")
-                        .HasForeignKey("FreelancerProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Attachment");
-
-                    b.Navigation("FreelancerProfile");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerSkill", b =>
                 {
-                    b.HasOne("FreelanceHub.Domain.Models.FreelancerProfile", "FreelancerProfile")
-                        .WithMany("FreelancerSkills")
-                        .HasForeignKey("FreelancerProfileId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("FreelanceHub.Domain.Models.Skill", "Skill")
                         .WithMany("FreelancerSkills")
                         .HasForeignKey("SkillId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
-
-                    b.Navigation("FreelancerProfile");
 
                     b.Navigation("Skill");
                 });
@@ -1561,99 +1288,18 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FreelanceHub.Domain.Models.Job", "Job")
-                        .WithMany("JobAttachments")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Attachment");
-
-                    b.Navigation("Job");
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.JobCategory", b =>
-                {
-                    b.HasOne("FreelanceHub.Domain.Models.Category", "Category")
-                        .WithMany("JobCategories")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("FreelanceHub.Domain.Models.Job", "Job")
-                        .WithMany("JobCategories")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Job");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.JobSkill", b =>
                 {
-                    b.HasOne("FreelanceHub.Domain.Models.Job", "Job")
-                        .WithMany("JobSkills")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("FreelanceHub.Domain.Models.Skill", "Skill")
                         .WithMany("JobSkills")
                         .HasForeignKey("SkillId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("Job");
-
                     b.Navigation("Skill");
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.JobTag", b =>
-                {
-                    b.HasOne("FreelanceHub.Domain.Models.Job", "Job")
-                        .WithMany("JobTags")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("FreelanceHub.Domain.Models.Tag", "Tag")
-                        .WithMany("JobTags")
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Job");
-
-                    b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Review", b =>
-                {
-                    b.HasOne("FreelanceHub.Domain.Models.Contract", "Contract")
-                        .WithMany("Reviews")
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "RevieweeUser")
-                        .WithMany()
-                        .HasForeignKey("RevieweeUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "ReviewerUser")
-                        .WithMany()
-                        .HasForeignKey("ReviewerUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Contract");
-
-                    b.Navigation("RevieweeUser");
-
-                    b.Navigation("ReviewerUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -1692,17 +1338,8 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Application", b =>
-                {
-                    b.Navigation("ApplicationAttachments");
-
-                    b.Navigation("Contract");
-                });
-
             modelBuilder.Entity("FreelanceHub.Domain.Models.ApplicationUser", b =>
                 {
-                    b.Navigation("Applications");
-
                     b.Navigation("ClientProfile");
 
                     b.Navigation("FreelancerProfile");
@@ -1727,43 +1364,12 @@ namespace FreelanceHub.Infrastructure.Migrations
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Category", b =>
                 {
-                    b.Navigation("JobCategories");
-
                     b.Navigation("Jobs");
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfile", b =>
-                {
-                    b.Navigation("ClientProfileAttachments");
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Contract", b =>
-                {
-                    b.Navigation("ContractAttachments");
-
-                    b.Navigation("Reviews");
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.FreelancerProfile", b =>
-                {
-                    b.Navigation("FreelancerProfileAttachments");
-
-                    b.Navigation("FreelancerSkills");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Job", b =>
                 {
-                    b.Navigation("Applications");
-
                     b.Navigation("Contract");
-
-                    b.Navigation("JobAttachments");
-
-                    b.Navigation("JobCategories");
-
-                    b.Navigation("JobSkills");
-
-                    b.Navigation("JobTags");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Skill", b =>
@@ -1771,11 +1377,6 @@ namespace FreelanceHub.Infrastructure.Migrations
                     b.Navigation("FreelancerSkills");
 
                     b.Navigation("JobSkills");
-                });
-
-            modelBuilder.Entity("FreelanceHub.Domain.Models.Tag", b =>
-                {
-                    b.Navigation("JobTags");
                 });
 #pragma warning restore 612, 618
         }

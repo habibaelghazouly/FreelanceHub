@@ -1,0 +1,112 @@
+@model FreelanceHub.Web.ViewModels.JobBrowseViewModel
+@{
+    ViewData["Title"] = "Browse Jobs";
+}
+
+<div class="row g-4">
+    <div class="col-lg-3">
+        <form method="get" class="card p-3 shadow-sm">
+            <h5 class="mb-3">Filters</h5>
+
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+                    <option value="">All categories</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Skill</label>
+                <select asp-for="SkillId" asp-items="Model.Skills" class="form-select">
+                    <option value="">All skills</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Max budget</label>
+                <input asp-for="MaxBudget" type="number" min="0" step="100" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Sort by</label>
+                <select asp-for="SortOrder" class="form-select">
+                    <option value="date">Newest</option>
+                    <option value="budget">Highest budget</option>
+                </select>
+            </div>
+
+            <input asp-for="PageNumber" type="hidden" value="1" />
+            <button type="submit" class="btn btn-primary">Apply</button>
+        </form>
+    </div>
+
+    <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">Open jobs</h2>
+            <span class="text-muted">Showing @Model.Jobs.Count jobs</span>
+        </div>
+
+        @if (!Model.Jobs.Any())
+        {
+            <div class="alert alert-info">No matching jobs found.</div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                @foreach (var job in Model.Jobs)
+                {
+                    <div class="col">
+                        <!-- Added a clickable anchor wrapping the card with transition classes -->
+                        <a href="#" onclick="alert('Clicked on job: @job.Title'); return false;" class="text-decoration-none text-dark d-block h-100 job-card-link">
+                            <div class="card h-100 shadow-sm transition-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title">@job.Title</h5>
+                                        <span class="badge bg-success">$@job.Budget.ToString("N0")</span>
+                                    </div>
+                                    <p class="card-text text-muted">@job.Description</p>
+                                    <div class="small text-muted">Posted @job.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <style>
+                .transition-card {
+                    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+                }
+                
+                .job-card-link:hover .transition-card {
+                    transform: translateY(-4px) scale(1.01);
+                    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+                    background-color: #d3e6f9 !important; /* Slightly darker shade on hover */
+                }
+                
+                .job-card-link:hover .transition-card .card-title {
+                    color: #0d6efd;
+                }
+            </style>
+
+            var totalPages = Math.Max(1, (int)Math.Ceiling(Model.TotalCount / (double)Math.Max(Model.PageSize, 1)));
+            var currentPage = Math.Max(1, Model.PageNumber);
+            <nav class="mt-4" aria-label="Job paging">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(currentPage <= 1 ? "disabled" : string.Empty)">
+                        <a class="page-link" asp-route-PageNumber="@(currentPage - 1)" asp-route-CategoryId="@Model.CategoryId" asp-route-SkillId="@Model.SkillId" asp-route-MaxBudget="@Model.MaxBudget" asp-route-SortOrder="@Model.SortOrder">Previous</a>
+                    </li>
+                    @for (var i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : string.Empty)">
+                            <a class="page-link" asp-route-PageNumber="@i" asp-route-CategoryId="@Model.CategoryId" asp-route-SkillId="@Model.SkillId" asp-route-MaxBudget="@Model.MaxBudget" asp-route-SortOrder="@Model.SortOrder">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(currentPage >= totalPages ? "disabled" : string.Empty)">
+                        <a class="page-link" asp-route-PageNumber="@(currentPage + 1)" asp-route-CategoryId="@Model.CategoryId" asp-route-SkillId="@Model.SkillId" asp-route-MaxBudget="@Model.MaxBudget" asp-route-SortOrder="@Model.SortOrder">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
