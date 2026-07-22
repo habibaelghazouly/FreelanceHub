@@ -17,6 +17,35 @@ namespace FreelanceHub.Infrastructure.Migrations
                 type: "int",
                 nullable: true);
 
+                migrationBuilder.CreateTable(
+    name: "attachments",
+            columns: table => new
+            {
+                attachment_id = table.Column<int>(type: "int", nullable: false)
+                    .Annotation("SqlServer:Identity", "1, 1"),
+                original_file_name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                stored_file_name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                file_url = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                content_type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                file_size = table.Column<long>(type: "bigint", nullable: true),
+                uploaded_by_user_id = table.Column<int>(type: "int", nullable: false),
+                uploaded_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSDATETIME()")
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_attachments", x => x.attachment_id);
+                table.ForeignKey(
+                    name: "FK_attachments_users_uploaded_by_user_id",
+                    column: x => x.uploaded_by_user_id,
+                    principalTable: "users",
+                    principalColumn: "user_id");
+            });
+
+        migrationBuilder.CreateIndex(
+            name: "IX_attachments_uploaded_by_user_id",
+            table: "attachments",
+            column: "uploaded_by_user_id");
+
 
             migrationBuilder.CreateTable(
                 name: "freelancer_profiles",
@@ -114,6 +143,9 @@ namespace FreelanceHub.Infrastructure.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_users_attachments_profile_image_attachment_id",
                 table: "users");
+                
+            migrationBuilder.DropTable(
+                name: "attachments");
 
             migrationBuilder.DropTable(
                 name: "client_profiles");

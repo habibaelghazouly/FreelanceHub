@@ -2,11 +2,8 @@
     ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Manage projects, proposals, and collaborations in one place.</p>
-    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Freelancer"))
-    {
-        <a class="btn btn-primary" asp-controller="Applications" asp-action="Submit">Submit Application</a>
-    }
+<div class="text-center py-5">
+    <h1 class="display-4">Find the right work</h1>
+    <p class="lead">Browse open jobs, filter by budget and skills, and sort them your way.</p>
+    <a class="btn btn-primary btn-lg" asp-controller="Jobs" asp-action="Browse">Browse Jobs</a>
 </div>

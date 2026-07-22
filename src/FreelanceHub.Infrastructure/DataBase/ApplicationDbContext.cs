@@ -13,7 +13,6 @@ namespace FreelanceHub.Infrastructure.DataBase
 		}
 
 		public DbSet<Skill> Skills => Set<Skill>();
-		public DbSet<Category> Categories => Set<Category>();
 
 		public DbSet<Attachment> Attachments => Set<Attachment>();
 

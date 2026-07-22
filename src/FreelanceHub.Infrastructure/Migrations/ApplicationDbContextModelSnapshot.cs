@@ -676,6 +676,10 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("budget");
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int")
+                        .HasColumnName("category_id");
+
                     b.Property<int>("ClientUserId")
                         .HasColumnType("int")
                         .HasColumnName("client_user_id");
@@ -724,6 +728,8 @@ namespace FreelanceHub.Infrastructure.Migrations
                         .HasDefaultValueSql("SYSUTCDATETIME()");
 
                     b.HasKey("JobId");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("ClientUserId");
 
@@ -1531,11 +1537,18 @@ namespace FreelanceHub.Infrastructure.Migrations
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.Job", b =>
                 {
+                    b.HasOne("FreelanceHub.Domain.Models.Category", "Category")
+                        .WithMany("Jobs")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("FreelanceHub.Domain.Models.ApplicationUser", "ClientUser")
                         .WithMany("Jobs")
                         .HasForeignKey("ClientUserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("ClientUser");
                 });
@@ -1715,6 +1728,8 @@ namespace FreelanceHub.Infrastructure.Migrations
             modelBuilder.Entity("FreelanceHub.Domain.Models.Category", b =>
                 {
                     b.Navigation("JobCategories");
+
+                    b.Navigation("Jobs");
                 });
 
             modelBuilder.Entity("FreelanceHub.Domain.Models.ClientProfile", b =>
