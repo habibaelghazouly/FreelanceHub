@@ -25,7 +25,7 @@ namespace FreelanceHub.Infrastructure.Configurations
 			builder.Property(profile => profile.CompanyDescription).HasColumnName("company_description").HasMaxLength(2000);
 			builder.Property(profile => profile.CompanyWebsite).HasColumnName("company_website").HasMaxLength(500);
 			builder.Property(profile => profile.CompanyLogoAttachmentId).HasColumnName("company_logo_attachment_id");
-			builder.Property(profile => profile.RatingAverage).HasColumnName("rating_averge").HasDefaultValue(0);
+			builder.Property(profile => profile.RatingAverage).HasColumnName("rating_averge").HasPrecision(3, 2).HasDefaultValue(0m);
 			builder.Property(profile => profile.RatingCount).HasColumnName("rating_count").HasDefaultValue(0);
 			builder.Property(profile => profile.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("SYSUTCDATETIME()");
 			builder.Property(profile => profile.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("SYSUTCDATETIME()");

@@ -18,6 +18,7 @@ namespace FreelanceHub.Application.Services.Implementations
 		private readonly IApplicationUserRepository _applicationUserRepository;
 		private readonly IAttachmentRepository _attachmentRepository;
 		private readonly IFileUploadService _fileUploadService;
+		private readonly IContractService _contractService;
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly ILogger<ProfileService> _logger;
@@ -26,6 +27,7 @@ namespace FreelanceHub.Application.Services.Implementations
 			IApplicationUserRepository applicationUserRepository,
 			IAttachmentRepository attachmentRepository,
 			IFileUploadService fileUploadService,
+			IContractService contractService,
 			IUnitOfWork unitOfWork,
 			UserManager<ApplicationUser> userManager,
 			ILogger<ProfileService> logger)
@@ -33,6 +35,7 @@ namespace FreelanceHub.Application.Services.Implementations
 			_applicationUserRepository = applicationUserRepository;
 			_attachmentRepository = attachmentRepository;
 			_fileUploadService = fileUploadService;
+			_contractService = contractService;
 			_unitOfWork = unitOfWork;
 			_userManager = userManager;
 			_logger = logger;
@@ -48,6 +51,7 @@ namespace FreelanceHub.Application.Services.Implementations
 
 			var clientProfile = user.ClientProfile;
 			var freelancerProfile = user.FreelancerProfile;
+			var receivedReviews = await _contractService.GetReceivedReviewsAsync(userId);
 			var roles = await _userManager.GetRolesAsync(user);
 			var role = roles.Contains(ClientRole, StringComparer.Ordinal)
 				? ClientRole
@@ -77,7 +81,8 @@ namespace FreelanceHub.Application.Services.Implementations
 				AvailabilityStatus = freelancerProfile?.AvailabilityStatus,
 				ExternalPortfolioUrl = freelancerProfile?.ExternalPortfolioUrl,
 				RatingAverage = clientProfile?.RatingAverage ?? freelancerProfile?.RatingAverage ?? 0,
-				RatingCount = clientProfile?.RatingCount ?? freelancerProfile?.RatingCount ?? 0
+				RatingCount = clientProfile?.RatingCount ?? freelancerProfile?.RatingCount ?? 0,
+				ReceivedReviews = receivedReviews
 			};
 		}
 
