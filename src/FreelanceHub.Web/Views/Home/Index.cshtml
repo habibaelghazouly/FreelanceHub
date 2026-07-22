@@ -9,4 +9,8 @@
     {
         <a class="btn btn-primary" asp-controller="Applications" asp-action="MyApplications">Go to My Applications</a>
     }
+    else if (User.Identity?.IsAuthenticated == true && User.IsInRole("Client"))
+    {
+        <a class="btn btn-primary" asp-controller="Applications" asp-action="SubmittedApplications">Submitted Applications</a>
+    }
 </div>

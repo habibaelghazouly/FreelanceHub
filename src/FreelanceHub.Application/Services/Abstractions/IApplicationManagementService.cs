@@ -8,5 +8,8 @@ namespace FreelanceHub.Application.Services.Abstractions
         Task<ApplicationActionResult> SubmitApplicationAsync(SubmitApplicationRequest request, CancellationToken cancellationToken = default);
 
         Task<FreelancerApplicationDashboardResult> GetFreelancerDashboardAsync(int freelancerUserId, CancellationToken cancellationToken = default);
+
+        Task<ClientApplicationDashboardResult> GetClientDashboardAsync(int clientUserId, int jobId, CancellationToken cancellationToken = default);
+
     }
 }

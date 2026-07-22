@@ -158,6 +158,31 @@ namespace FreelanceHub.Application.Services.Implementations
             };
         }
 
+        public async Task<ClientApplicationDashboardResult> GetClientDashboardAsync(int clientUserId, int jobId, CancellationToken cancellationToken = default)
+        {
+            var applications = await _applicationRepository.ListByClientUserIdAsync(clientUserId, cancellationToken);
+
+            if (jobId > 0)
+            {
+                applications = applications.Where(app => app.JobId == jobId).ToList();
+            }
+
+            return new ClientApplicationDashboardResult
+            {
+                Applications = applications.Select(application => new ClientApplicationListItemResult
+                {
+                    ApplicationId = application.ApplicationId,
+                    JobId = application.JobId,
+                    JobTitle = application.Job.Title,
+                    FreelancerUserId = application.FreelancerUserId,
+                    FreelancerDisplayName = $"{application.FreelancerUser.FirstName} {application.FreelancerUser.LastName}".Trim(),
+                    ProposedAmount = application.ProposedAmount,
+                    TimelineDays = application.TimelineDays,
+                    ApplicationStatus = application.ApplicationStatus,
+                    SubmittedAt = application.CreatedAt
+                }).ToArray()
+            };
+        }
         private static List<string> ValidateSubmitRequest(SubmitApplicationRequest request)
         {
             var errors = new List<string>();

@@ -4,6 +4,7 @@ namespace FreelanceHub.Web.ViewModels
 {
     public class ClientApplicationDashboardViewModel
     {
+        public int? JobId { get; set; }
         public IReadOnlyList<ClientApplicationItemViewModel> Applications { get; set; } = Array.Empty<ClientApplicationItemViewModel>();
     }
 

@@ -112,6 +112,41 @@ namespace FreelanceHub.Web.Controllers
             });
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Client")]
+        public async Task<IActionResult> SubmittedApplications(int jobId )
+        {
+
+            // Require a valid jobId
+            if (jobId <= 0)
+            {
+                return BadRequest("A valid Job ID is required to view submitted applications.");
+            }
+
+            if (!TryGetCurrentUserId(out var clientUserId))
+            {
+                return Forbid();
+            }
+
+            var dashboard = await _applicationManagementService.GetClientDashboardAsync(clientUserId, jobId, HttpContext.RequestAborted);
+            return View(new ClientApplicationDashboardViewModel
+            {
+                Applications = dashboard.Applications.Select(item => new ClientApplicationItemViewModel
+                {
+                    ApplicationId = item.ApplicationId,
+                    JobId = item.JobId,
+                    JobTitle = item.JobTitle,
+                    FreelancerUserId = item.FreelancerUserId,
+                    FreelancerDisplayName = item.FreelancerDisplayName,
+                    ProposedAmount = item.ProposedAmount,
+                    TimelineDays = item.TimelineDays,
+                    ApplicationStatus = item.ApplicationStatus,
+                    SubmittedAt = item.SubmittedAt
+                }).ToArray()
+            });
+        }
+
+
         private bool TryGetCurrentUserId(out int userId)
         {
             var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
