@@ -14,5 +14,8 @@ namespace FreelanceHub.Application.Services.Abstractions
 
         Task<ClientApplicationDashboardResult> GetClientDashboardAsync(int clientUserId, int jobId, CancellationToken cancellationToken = default);
 
+        Task<ApplicationActionResult> UpdateApplicationStatusAsync(UpdateApplicationStatusRequest request, CancellationToken cancellationToken = default);
+
+        Task<List<FreelanceHub.Domain.Models.Application>> GetApplicationsForJobAsync(int jobId, int clientUserId, CancellationToken cancellationToken = default);
     }
 }

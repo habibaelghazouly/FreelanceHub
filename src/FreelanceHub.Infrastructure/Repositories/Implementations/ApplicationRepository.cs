@@ -70,6 +70,13 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
                     application.ApplicationId == applicationId
                     && application.Job.ClientUserId == clientUserId, cancellationToken);
         }
-
+        public async Task<List<Application>> GetApplicationsByJobIdAsync(int jobId, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Applications
+                .Include(a => a.FreelancerUser)
+                .Where(a => a.JobId == jobId)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

@@ -4,7 +4,9 @@ using FreelanceHub.Application.Exceptions;
 using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
+using FreelanceHub.Infrastructure.DataBase;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using ApplicationEntity = FreelanceHub.Domain.Models.Application;
 
@@ -25,17 +27,20 @@ namespace FreelanceHub.Application.Services.Implementations
         private readonly IAttachmentRepository _attachmentRepository;
         private readonly IFileUploadService _fileUploadService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ApplicationDbContext _dbContext;
 
         public ApplicationManagementService(
             IApplicationRepository applicationRepository,
             IAttachmentRepository attachmentRepository,
             IFileUploadService fileUploadService,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ApplicationDbContext dbContext)
         {
             _applicationRepository = applicationRepository;
             _attachmentRepository = attachmentRepository;
             _fileUploadService = fileUploadService;
             _unitOfWork = unitOfWork;
+            _dbContext = dbContext;
         }
 
         public async Task<ApplicationActionResult> SubmitApplicationAsync(SubmitApplicationRequest request, CancellationToken cancellationToken = default)
@@ -75,11 +80,10 @@ namespace FreelanceHub.Application.Services.Implementations
 
             try
             {
-                // 1. First save the Application so we have a valid ApplicationId
+               
                 await _applicationRepository.AddAsync(application, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // 2. Process and save attachments & join entity
                 foreach (var portfolioFile in request.PortfolioFiles)
                 {
                     var upload = await _fileUploadService.UploadPortfolioFileAsync(portfolioFile, PortfolioUploadsFolder, cancellationToken);
@@ -107,7 +111,6 @@ namespace FreelanceHub.Application.Services.Implementations
                     });
                 }
 
-                // 3. Save join entity changes and commit transaction
                 if (request.PortfolioFiles.Count > 0)
                 {
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -186,6 +189,70 @@ namespace FreelanceHub.Application.Services.Implementations
                     SubmittedAt = application.CreatedAt
                 }).ToArray()
             };
+        }
+        public async Task<List<FreelanceHub.Domain.Models.Application>> GetApplicationsForJobAsync(int jobId, int clientUserId, CancellationToken cancellationToken = default)
+        {
+            // 1. Verify that the job exists using DbContext directly
+            var job = await _dbContext.Jobs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.JobId == jobId, cancellationToken);
+
+            if (job == null)
+            {
+                return new List<FreelanceHub.Domain.Models.Application>();
+            }
+
+            // 2. Authorization check: Ensure the requesting client owns the job
+            if (job.ClientUserId != clientUserId)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view applications for this job.");
+            }
+
+            // 3. Fetch applications from application repository
+            return await _applicationRepository.GetApplicationsByJobIdAsync(jobId, cancellationToken);
+        }
+
+        public async Task<ApplicationActionResult> UpdateApplicationStatusAsync(UpdateApplicationStatusRequest request, CancellationToken cancellationToken = default)
+        {
+            if (!AllowedClientStatuses.Contains(request.ApplicationStatus))
+            {
+                return ApplicationActionResult.Failed("Invalid status update.");
+            }
+
+            var application = await _applicationRepository.GetByIdForClientAsync(request.ApplicationId, request.ClientUserId, cancellationToken);
+            if (application is null)
+            {
+                return ApplicationActionResult.Failed("The selected application was not found.");
+            }
+
+            if (application.ApplicationStatus == request.ApplicationStatus)
+            {
+                return ApplicationActionResult.Success(application.JobId);
+            }
+
+            if (application.ApplicationStatus is ApplicationStatus.Accepted or ApplicationStatus.Rejected)
+            {
+                return ApplicationActionResult.Failed("Finalized applications cannot be changed.");
+            }
+
+            // 1. UPDATE THE ENTITY STATE (This was missing!)
+            application.ApplicationStatus = request.ApplicationStatus;
+
+            // 2. SAVE CHANGES INSIDE TRANSACTION
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return ApplicationActionResult.Failed("Unable to update the application status right now. Please try again.");
+            }
+
+            // 3. RETURN SUCCESS WITH JOB ID FOR REDIRECT
+            return ApplicationActionResult.Success(application.JobId);
         }
         private static List<string> ValidateSubmitRequest(SubmitApplicationRequest request)
         {

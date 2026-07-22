@@ -1,11 +1,12 @@
-﻿using System.Security.Claims;
-using FreelanceHub.Application.DTOs.Requests;
+﻿using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Domain.Enums;
+using FreelanceHub.Domain.Models;
+using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using FreelanceHub.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using FreelanceHub.Infrastructure.Repositories.Abstractions;
+using System.Security.Claims;
 
 namespace FreelanceHub.Web.Controllers
 {
@@ -142,13 +143,11 @@ namespace FreelanceHub.Web.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Client")]
-        public async Task<IActionResult> SubmittedApplications(int jobId )
+        public async Task<IActionResult> SubmittedApplications(int jobId)
         {
-
-            // Require a valid jobId
             if (jobId <= 0)
             {
-                return BadRequest("A valid Job ID is required to view submitted applications.");
+                return BadRequest("A valid Job ID is required.");
             }
 
             if (!TryGetCurrentUserId(out var clientUserId))
@@ -156,24 +155,63 @@ namespace FreelanceHub.Web.Controllers
                 return Forbid();
             }
 
-            var dashboard = await _applicationManagementService.GetClientDashboardAsync(clientUserId, jobId, HttpContext.RequestAborted);
-            return View(new ClientApplicationDashboardViewModel
+            var job = await _applicationManagementService.GetOpenJobByIdAsync(jobId, HttpContext.RequestAborted);
+            if (job == null)
             {
-                Applications = dashboard.Applications.Select(item => new ClientApplicationItemViewModel
+                return NotFound("Job not found.");
+            }
+
+            var applications = await _applicationManagementService.GetApplicationsForJobAsync(jobId, clientUserId, HttpContext.RequestAborted);
+
+            var viewModel = new SubmittedApplicationsListViewModel
+            {
+                JobId = job.JobId,
+                JobTitle = job.Title,
+                Applications = applications.Select(a => new SubmittedApplicationViewModel
                 {
-                    ApplicationId = item.ApplicationId,
-                    JobId = item.JobId,
-                    JobTitle = item.JobTitle,
-                    FreelancerUserId = item.FreelancerUserId,
-                    FreelancerDisplayName = item.FreelancerDisplayName,
-                    ProposedAmount = item.ProposedAmount,
-                    TimelineDays = item.TimelineDays,
-                    ApplicationStatus = item.ApplicationStatus,
-                    SubmittedAt = item.SubmittedAt
-                }).ToArray()
-            });
+                    ApplicationId = a.ApplicationId,
+                    JobId = a.JobId,
+                    FreelancerUserId = a.FreelancerUserId,
+                    FreelancerName = a.FreelancerUser.UserName,
+                    ProposedAmount = a.ProposedAmount,
+                    TimelineDays = a.TimelineDays,
+                    CoverLetter = a.CoverLetter,
+                    SubmittedAt = a.CreatedAt,
+                    ApplicationStatus = a.ApplicationStatus
+                }).ToList()
+            };
+
+            return View(viewModel);
         }
 
+        [HttpPost]
+        [Authorize(Roles = "Client")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int applicationId, ApplicationStatus applicationStatus)
+        {
+            if (!TryGetCurrentUserId(out var clientUserId))
+            {
+                return Forbid();
+            }
+
+            var result = await _applicationManagementService.UpdateApplicationStatusAsync(new UpdateApplicationStatusRequest
+            {
+                ApplicationId = applicationId,
+                ClientUserId = clientUserId,
+                ApplicationStatus = applicationStatus
+            }, HttpContext.RequestAborted);
+
+            if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = "Application status updated.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = string.Join(" ", result.Errors);
+            }
+
+            return RedirectToAction(nameof(SubmittedApplications), new { jobId = int.Parse(result.Errors[0]) });
+        }
 
         private bool TryGetCurrentUserId(out int userId)
         {
