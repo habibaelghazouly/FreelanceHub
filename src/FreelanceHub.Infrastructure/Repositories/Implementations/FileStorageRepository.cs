@@ -41,15 +41,29 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 				content.Position = 0;
 			}
 
-			await using (var stream = File.Create(physicalPath))
+			try
 			{
+				await using var stream = File.Create(physicalPath);
 				await content.CopyToAsync(stream, cancellationToken);
+			}
+			catch
+			{
+				try
+				{
+					File.Delete(physicalPath);
+				}
+				catch
+				{
+					// Preserve the original upload failure if cleanup also fails.
+				}
+
+				throw;
 			}
 
 			return (storedFileName, $"/{storageKey}", storageKey);
 		}
 
-		public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
+		public Task DeleteAsync(string storageKey)
 		{
 			if (!string.IsNullOrWhiteSpace(storageKey))
 			{

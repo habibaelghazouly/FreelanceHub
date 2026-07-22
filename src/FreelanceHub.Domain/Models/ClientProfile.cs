@@ -1,3 +1,5 @@
+using FreelanceHub.Domain.Enums;
+
 namespace FreelanceHub.Domain.Models
 {
 	public class ClientProfile
@@ -7,6 +9,8 @@ namespace FreelanceHub.Domain.Models
 		public int UserId { get; set; }
 
 		public ApplicationUser User { get; set; } = null!;
+
+		public ClientType ClientType { get; set; }
 
 		public string? CompanyName { get; set; }
 
@@ -18,12 +22,14 @@ namespace FreelanceHub.Domain.Models
 
 		public Attachment? CompanyLogoAttachment { get; set; }
 
-		public int RatingAverage { get; set; }
+		public decimal RatingAverage { get; set; }
 
 		public int RatingCount { get; set; }
 
-		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+		public DateTime CreatedAt { get; set; }
 
-		public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+		public DateTime UpdatedAt { get; set; }
+
+		public ICollection<ClientProfileAttachment> ClientProfileAttachments { get; set; } = new List<ClientProfileAttachment>();
 	}
 }

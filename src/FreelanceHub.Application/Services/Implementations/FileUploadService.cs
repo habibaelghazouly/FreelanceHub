@@ -6,71 +6,147 @@ using FreelanceHub.Infrastructure.Repositories.Abstractions;
 
 namespace FreelanceHub.Application.Services.Implementations
 {
-	public class FileUploadService : IFileUploadService
-	{
-		private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
-		{
-			"image/jpeg",
-			"image/png",
-			"image/webp",
-			"image/gif"
-		};
+    public class FileUploadService : IFileUploadService
+    {
+        private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif"
+        };
 
-		private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
-		{
-			".jpg",
-			".jpeg",
-			".png",
-			".webp",
-			".gif"
-		};
+        private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".gif"
+        };
 
-		private const long MaxImageSizeBytes = 2 * 1024 * 1024;
-		private readonly IFileStorageRepository _fileStorageRepository;
+        private static readonly HashSet<string> AllowedPortfolioContentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif",
+            "application/pdf"
+        };
 
-		public FileUploadService(IFileStorageRepository fileStorageRepository)
-		{
-			_fileStorageRepository = fileStorageRepository;
-		}
+        private static readonly HashSet<string> AllowedPortfolioExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".gif",
+            ".pdf"
+        };
 
-		public async Task<FileUploadResult> UploadImageAsync(UploadedFileRequest file, string folderName, CancellationToken cancellationToken = default)
-		{
-			if (file.Size == 0)
-			{
-				throw new FileUploadException("The uploaded image is empty.");
-			}
+        private const long MaxPortfolioFileSizeBytes = 10 * 1024 * 1024;
+        private const long MaxImageSizeBytes = 2 * 1024 * 1024;
+        private readonly IFileStorageRepository _fileStorageRepository;
 
-			if (file.Size > MaxImageSizeBytes)
-			{
-				throw new FileUploadException("The profile image must be 2 MB or smaller.");
-			}
+        public FileUploadService(IFileStorageRepository fileStorageRepository)
+        {
+            _fileStorageRepository = fileStorageRepository;
+        }
 
-			var extension = Path.GetExtension(file.OriginalFileName);
-			if (!AllowedExtensions.Contains(extension) || !AllowedContentTypes.Contains(file.ContentType))
-			{
-				throw new FileUploadException("Only JPG, PNG, WEBP, and GIF images are allowed.");
-			}
+        public Task<FileUploadResult> UploadPortfolioFileAsync(UploadedFileRequest file, string folderName, CancellationToken cancellationToken = default)
+        {
+            return UploadFileAsync(
+                file,
+                folderName,
+                AllowedPortfolioExtensions,
+                AllowedPortfolioContentTypes,
+                MaxPortfolioFileSizeBytes,
+                "Portfolio files must be 10 MB or smaller.",
+                "Only PDF, JPG, PNG, WEBP, and GIF files are allowed for portfolio uploads.",
+                cancellationToken);
+        }
 
-			var result = await _fileStorageRepository.SaveAsync(
-				file.Content,
-				file.OriginalFileName,
-				folderName,
-				cancellationToken);
+        public Task<FileUploadResult> UploadImageAsync(UploadedFileRequest file, string folderName, CancellationToken cancellationToken = default)
+        {
+            return UploadFileAsync(
+                file,
+                folderName,
+                AllowedExtensions,
+                AllowedContentTypes,
+                MaxImageSizeBytes,
+                "The profile image must be 2 MB or smaller.",
+                "Only JPG, PNG, WEBP, and GIF images are allowed.",
+                cancellationToken);
+        }
 
-			return new FileUploadResult
-			{
-				OriginalFileName = Path.GetFileName(file.OriginalFileName),
-				StoredFileName = result.StoredFileName,
-				FileUrl = result.FileUrl,
-				ContentType = file.ContentType,
-				FileSize = file.Size,
-				StorageKey = result.StorageKey
-			};
-		}
+        private async Task<FileUploadResult> UploadFileAsync(
+            UploadedFileRequest file,
+            string folderName,
+            IReadOnlySet<string> allowedExtensions,
+            IReadOnlySet<string> allowedContentTypes,
+            long maxFileSizeBytes,
+            string maxFileSizeErrorMessage,
+            string invalidTypeErrorMessage,
+            CancellationToken cancellationToken)
+        {
+            if (file.Size == 0)
+            {
+                throw new FileUploadException("The uploaded file is empty.");
+            }
 
-		public Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
-		{
-			return _fileStorageRepository.DeleteAsync(storageKey, cancellationToken);
-		}
-	}
+            if (file.Size > maxFileSizeBytes)
+            {
+                throw new FileUploadException(maxFileSizeErrorMessage);
+            }
+
+            var originalFileName = Path.GetFileName(file.OriginalFileName);
+            if (originalFileName.Length > 255)
+            {
+                throw new FileUploadException("The filename must be 255 characters or fewer.");
+            }
+
+            var extension = Path.GetExtension(originalFileName);
+            if (!allowedExtensions.Contains(extension)
+                || !allowedContentTypes.Contains(file.ContentType)
+                || !IsExtensionCompatible(extension, file.ContentType))
+            {
+                throw new FileUploadException(invalidTypeErrorMessage);
+            }
+
+            var result = await _fileStorageRepository.SaveAsync(
+                file.Content,
+                originalFileName,
+                folderName,
+                cancellationToken);
+
+            return new FileUploadResult
+            {
+                OriginalFileName = originalFileName,
+                StoredFileName = result.StoredFileName,
+                FileUrl = result.FileUrl,
+                ContentType = file.ContentType,
+                FileSize = file.Size,
+                StorageKey = result.StorageKey
+            };
+        }
+
+        public Task DeleteAsync(string storageKey)
+        {
+            return _fileStorageRepository.DeleteAsync(storageKey);
+        }
+
+        private static bool IsExtensionCompatible(string extension, string contentType)
+        {
+            return contentType.ToLowerInvariant() switch
+            {
+                "image/jpeg" => extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
+                    || extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase),
+                "image/png" => extension.Equals(".png", StringComparison.OrdinalIgnoreCase),
+                "image/webp" => extension.Equals(".webp", StringComparison.OrdinalIgnoreCase),
+                "image/gif" => extension.Equals(".gif", StringComparison.OrdinalIgnoreCase),
+                "application/pdf" => extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase),
+                _ => false
+            };
+        }
+    }
 }

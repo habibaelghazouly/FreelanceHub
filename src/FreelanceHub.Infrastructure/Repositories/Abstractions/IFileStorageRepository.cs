@@ -8,6 +8,6 @@ namespace FreelanceHub.Infrastructure.Repositories.Abstractions
 			string folderName,
 			CancellationToken cancellationToken = default);
 
-		Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default);
+		Task DeleteAsync(string storageKey);
 	}
 }

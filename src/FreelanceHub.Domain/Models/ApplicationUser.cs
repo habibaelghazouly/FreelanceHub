@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using FreelanceHub.Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 
 namespace FreelanceHub.Domain.Models
 {
@@ -8,7 +9,7 @@ namespace FreelanceHub.Domain.Models
 
 		public string LastName { get; set; } = string.Empty;
 
-		public int UserStatus { get; set; }
+		public UserStatus UserStatus { get; set; } = UserStatus.Active;
 
 		public int? ProfileImageAttachmentId { get; set; }
 
@@ -20,10 +21,13 @@ namespace FreelanceHub.Domain.Models
 
 		public ICollection<Attachment> UploadedAttachments { get; set; } = new List<Attachment>();
 
-		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+		public DateTime CreatedAt { get; set; }
 
-		public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+		public DateTime UpdatedAt { get; set; }
         public virtual ICollection<Job> Jobs { get; set; } = new List<Job>();
 
-    }
+		public ICollection<Application> Applications { get; set; } = new List<Application>();
+
+
+	}
 }

@@ -4,8 +4,7 @@ namespace FreelanceHub.Domain.Models
 	{
 		public int JobId { get; set; }
 
-		// Requires the Job entity (not included in this delivery).
-		// public Job Job { get; set; } = null!;
+		public Job Job { get; set; } = null!;
 
 		public int SkillId { get; set; }
 

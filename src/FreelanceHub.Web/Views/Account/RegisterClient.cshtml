@@ -1,0 +1,84 @@
+@model RegisterClientViewModel
+
+@{
+    ViewData["Title"] = "Create Client Account";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-2">Create a Client account</h1>
+                <p class="text-muted mb-4">Tell us who is hiring, then start building your team.</p>
+
+                <form asp-action="RegisterClient" asp-route-returnUrl="@returnUrl" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <partial name="_RegisterAccountFields" model="Model" />
+
+                    <div class="border rounded p-3 mb-3">
+                        <h2 class="h6 mb-3">Client details</h2>
+
+                        <div class="mb-3">
+                            <label asp-for="ClientType" class="form-label"></label>
+                            <select asp-for="ClientType" asp-items="Html.GetEnumSelectList<ClientType>()" class="form-select">
+                                <option value="">Select client type</option>
+                            </select>
+                            <span asp-validation-for="ClientType" class="text-danger"></span>
+                        </div>
+
+                        <div id="companyFields">
+                            <div class="mb-3">
+                                <label asp-for="CompanyName" class="form-label"></label>
+                                <input asp-for="CompanyName" class="form-control" />
+                                <span asp-validation-for="CompanyName" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="CompanyWebsite" class="form-label"></label>
+                                <input asp-for="CompanyWebsite" class="form-control" type="url" placeholder="https://example.com" />
+                                <span asp-validation-for="CompanyWebsite" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-0">
+                                <label asp-for="CompanyDescription" class="form-label"></label>
+                                <textarea asp-for="CompanyDescription" class="form-control" rows="4"></textarea>
+                                <span asp-validation-for="CompanyDescription" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Create Client account</button>
+                </form>
+
+                <p class="mt-3 mb-0 text-center">
+                    <a asp-action="Register" asp-route-returnUrl="@returnUrl">Choose a different account type</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const clientType = document.getElementById('ClientType');
+            const companyFields = document.getElementById('companyFields');
+            const companyName = document.getElementById('CompanyName');
+            const companyDescription = document.getElementById('CompanyDescription');
+
+            function syncCompanyFields() {
+                const isCompany = clientType.value === '@((int)ClientType.Company)';
+                companyFields.classList.toggle('d-none', !isCompany);
+                companyFields.querySelectorAll('input, textarea').forEach(field => field.disabled = !isCompany);
+                companyName.required = isCompany;
+                companyDescription.required = isCompany;
+            }
+
+            clientType.addEventListener('change', syncCompanyFields);
+            syncCompanyFields();
+        })();
+    </script>
+}

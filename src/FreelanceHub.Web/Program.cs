@@ -55,13 +55,21 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
 			builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 			builder.Services.AddScoped<IJobBrowseService, JobBrowseService>();
+			builder.Services.AddScoped<IProfileService, ProfileService>();
 			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+			builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
 			builder.Services.AddScoped<IAttachmentRepository, AttachmentRepository>();
 			builder.Services.AddScoped<IClientProfileRepository, ClientProfileRepository>();
 			builder.Services.AddScoped<IFreelancerProfileRepository, FreelancerProfileRepository>();
 			builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
+			builder.Services.AddScoped<IJobService, JobService>();
+			builder.Services.AddScoped<IContractService, ContractService>();
+			builder.Services.AddScoped<IContractRepository, ContractRepository>();
 
-			var app = builder.Build();
+            builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
+            builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+
+            var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
 			if (!app.Environment.IsDevelopment())

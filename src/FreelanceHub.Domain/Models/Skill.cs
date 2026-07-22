@@ -2,7 +2,7 @@ namespace FreelanceHub.Domain.Models
 {
 	public class Skill
 	{
-		public int Id { get; set; }
+		public int SkillId { get; set; }
 
 		public string Name { get; set; } = string.Empty;
 

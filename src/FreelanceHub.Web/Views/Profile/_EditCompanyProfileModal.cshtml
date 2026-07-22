@@ -1,0 +1,44 @@
+@model EditCompanyProfileViewModel
+
+<div class="modal fade" id="edit-company-profile-modal" tabindex="-1" aria-labelledby="edit-company-profile-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content profile-edit-modal profile-page">
+            <form asp-controller="Profile" asp-action="UpdateCompanyProfile" method="post">
+                <div class="modal-header">
+                    <div>
+                        <span class="profile-kicker">Company profile</span>
+                        <h2 class="modal-title" id="edit-company-profile-title">Edit company details</h2>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="CompanyName" class="form-label"></label>
+                        <input asp-for="CompanyName" class="form-control" />
+                        <span asp-validation-for="CompanyName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CompanyWebsite" class="form-label"></label>
+                        <input asp-for="CompanyWebsite" class="form-control" type="url" placeholder="https://example.com" />
+                        <span asp-validation-for="CompanyWebsite" class="text-danger"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="CompanyDescription" class="form-label"></label>
+                        <textarea asp-for="CompanyDescription" class="form-control" rows="6"></textarea>
+                        <span asp-validation-for="CompanyDescription" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Save company profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

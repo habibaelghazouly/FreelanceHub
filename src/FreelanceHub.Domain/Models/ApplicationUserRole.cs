@@ -4,6 +4,6 @@ namespace FreelanceHub.Domain.Models
 {
 	public class ApplicationUserRole : IdentityUserRole<int>
 	{
-		public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+		public DateTime AssignedAt { get; set; }
 	}
 }

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/FreelanceHub.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <header>
@@ -25,10 +26,23 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Job" asp-action="Index">Jobs</a>
+                        </li>
+                        @if (User.IsInRole("Freelancer"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Applications" asp-action="Submit">Submit Application</a>
+                            </li>
+                        }
+
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Profile" asp-action="Index">Profile</a>
+                            </li>
                             <li class="nav-item">
                                 <span class="nav-link text-dark">Hello, @User.Identity.Name</span>
                             </li>
@@ -52,7 +66,7 @@
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="@(ViewData["MainContainerClass"] as string ?? "container")">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

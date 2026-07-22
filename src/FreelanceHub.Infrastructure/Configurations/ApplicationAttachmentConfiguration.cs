@@ -15,11 +15,12 @@ namespace FreelanceHub.Infrastructure.Configurations.Attachments
 			builder.Property(aa => aa.ApplicationId).HasColumnName("application_id");
 			builder.Property(aa => aa.AttachmentId).HasColumnName("attachment_id");
 
-			// Requires the JobApplication entity (not included in this delivery).
-			// builder.HasOne(aa => aa.Application)
-			// 	.WithMany(application => application.ApplicationAttachments)
-			// 	.HasForeignKey(aa => aa.ApplicationId)
-			// 	.OnDelete(DeleteBehavior.Cascade);
+			builder.HasQueryFilter(aa => !aa.Application.Job.IsDeleted);
+
+			builder.HasOne(aa => aa.Application)
+				.WithMany(application => application.ApplicationAttachments)
+				.HasForeignKey(aa => aa.ApplicationId)
+				.OnDelete(DeleteBehavior.Cascade);
 
 			builder.HasOne(aa => aa.Attachment)
 				.WithMany(attachment => attachment.ApplicationAttachments)

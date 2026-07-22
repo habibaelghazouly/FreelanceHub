@@ -8,7 +8,8 @@ namespace FreelanceHub.Infrastructure.Configurations
 	{
 		public void Configure(EntityTypeBuilder<Attachment> builder)
 		{
-			builder.ToTable("attachments");
+			builder.ToTable("attachments", table =>
+				table.HasCheckConstraint("chk_attachments_file_size", "[file_size] IS NULL OR [file_size] >= 0"));
 			builder.HasKey(attachment => attachment.AttachmentId);
 
 			builder.Property(attachment => attachment.AttachmentId).HasColumnName("attachment_id");
@@ -18,7 +19,7 @@ namespace FreelanceHub.Infrastructure.Configurations
 			builder.Property(attachment => attachment.FileUrl).HasColumnName("file_url").HasMaxLength(500).IsRequired();
 			builder.Property(attachment => attachment.ContentType).HasColumnName("content_type").HasMaxLength(100);
 			builder.Property(attachment => attachment.FileSize).HasColumnName("file_size");
-			builder.Property(attachment => attachment.UploadedAt).HasColumnName("uploaded_at").HasDefaultValueSql("SYSDATETIME()");
+			builder.Property(attachment => attachment.UploadedAt).HasColumnName("uploaded_at").HasDefaultValueSql("SYSUTCDATETIME()");
 
 			builder
 				.HasOne(attachment => attachment.UploadedByUser)

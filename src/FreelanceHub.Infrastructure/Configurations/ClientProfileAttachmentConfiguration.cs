@@ -19,11 +19,10 @@ namespace FreelanceHub.Infrastructure.Configurations.Attachments
 				.HasMaxLength(30)
 				.IsRequired();
 
-			// Requires the ClientProfile entity (not included in this delivery).
-			// builder.HasOne(cpa => cpa.ClientProfile)
-			// 	.WithMany(profile => profile.ClientProfileAttachments)
-			// 	.HasForeignKey(cpa => cpa.ClientProfileId)
-			// 	.OnDelete(DeleteBehavior.Cascade);
+			builder.HasOne(cpa => cpa.ClientProfile)
+				.WithMany(profile => profile.ClientProfileAttachments)
+				.HasForeignKey(cpa => cpa.ClientProfileId)
+				.OnDelete(DeleteBehavior.Cascade);
 
 			builder.HasOne(cpa => cpa.Attachment)
 				.WithMany(attachment => attachment.ClientProfileAttachments)

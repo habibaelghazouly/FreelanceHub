@@ -4,8 +4,7 @@ namespace FreelanceHub.Domain.Models
 	{
 		public int ClientProfileId { get; set; }
 
-		// Requires the ClientProfile entity (not included in this delivery).
-		// public ClientProfile ClientProfile { get; set; } = null!;
+		public ClientProfile ClientProfile { get; set; } = null!;
 
 		public int AttachmentId { get; set; }
 
