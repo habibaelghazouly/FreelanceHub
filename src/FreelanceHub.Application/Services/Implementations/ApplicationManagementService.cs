@@ -192,7 +192,6 @@ namespace FreelanceHub.Application.Services.Implementations
         }
         public async Task<List<FreelanceHub.Domain.Models.Application>> GetApplicationsForJobAsync(int jobId, int clientUserId, CancellationToken cancellationToken = default)
         {
-            // 1. Verify that the job exists using DbContext directly
             var job = await _dbContext.Jobs
                 .AsNoTracking()
                 .FirstOrDefaultAsync(j => j.JobId == jobId, cancellationToken);
@@ -202,17 +201,16 @@ namespace FreelanceHub.Application.Services.Implementations
                 return new List<FreelanceHub.Domain.Models.Application>();
             }
 
-            // 2. Authorization check: Ensure the requesting client owns the job
             if (job.ClientUserId != clientUserId)
             {
                 throw new UnauthorizedAccessException("You are not authorized to view applications for this job.");
             }
-
-            // 3. Fetch applications from application repository
             return await _applicationRepository.GetApplicationsByJobIdAsync(jobId, cancellationToken);
         }
 
-        public async Task<ApplicationActionResult> UpdateApplicationStatusAsync(UpdateApplicationStatusRequest request, CancellationToken cancellationToken = default)
+        public async Task<ApplicationActionResult> UpdateApplicationStatusAsync(
+     UpdateApplicationStatusRequest request,
+     CancellationToken cancellationToken = default)
         {
             if (!AllowedClientStatuses.Contains(request.ApplicationStatus))
             {
@@ -235,25 +233,43 @@ namespace FreelanceHub.Application.Services.Implementations
                 return ApplicationActionResult.Failed("Finalized applications cannot be changed.");
             }
 
-            // 1. UPDATE THE ENTITY STATE (This was missing!)
+            // Update Application Status
             application.ApplicationStatus = request.ApplicationStatus;
 
-            // 2. SAVE CHANGES INSIDE TRANSACTION
             await _unitOfWork.BeginTransactionAsync(cancellationToken);
             try
             {
+                // If status is Accepted, create the Contract record
+                if (request.ApplicationStatus == ApplicationStatus.Accepted)
+                {
+                    var contract = new Contract
+                    {
+                        JobId = application.JobId,
+                        AcceptedApplicationId = application.ApplicationId,
+                        AgreedAmount = application.ProposedAmount,
+                        ContractStatus = ContractStatus.Draft,
+                        StartDate = DateTime.UtcNow,
+                        ExpectedCompletionDate = DateTime.UtcNow.AddDays(application.TimelineDays),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _dbContext.Contracts.AddAsync(contract, cancellationToken);
+                   
+                }
+
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
             }
             catch (DbUpdateException)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                return ApplicationActionResult.Failed("Unable to update the application status right now. Please try again.");
+                return ApplicationActionResult.Failed("Unable to update application status and create contract right now. Please try again.");
             }
 
-            // 3. RETURN SUCCESS WITH JOB ID FOR REDIRECT
             return ApplicationActionResult.Success(application.JobId);
         }
+
         private static List<string> ValidateSubmitRequest(SubmitApplicationRequest request)
         {
             var errors = new List<string>();
