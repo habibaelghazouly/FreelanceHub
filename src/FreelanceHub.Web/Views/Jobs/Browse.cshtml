@@ -57,7 +57,7 @@
                 {
                     <div class="col">
                         <!-- Added a clickable anchor wrapping the card with transition classes -->
-                        <a href="#" onclick="alert('Clicked on job: @job.Title'); return false;" class="text-decoration-none text-dark d-block h-100 job-card-link">
+                        <a asp-controller="Job" asp-action="DetailJob" asp-route-id="@job.JobId" class="text-decoration-none text-dark d-block h-100 job-card-link">
                             <div class="card h-100 shadow-sm transition-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start">
