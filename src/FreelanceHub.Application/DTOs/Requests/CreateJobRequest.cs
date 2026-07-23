@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace FreelanceHub.Application.DTOs.Requests
 {
     public class CreateJobRequest
@@ -13,5 +15,7 @@ namespace FreelanceHub.Application.DTOs.Requests
         public string SkillIds { get; set; } = string.Empty;
 
         public string TagIds { get; set; } = string.Empty;
+
+        public IReadOnlyList<UploadedFileRequest> JobFiles { get; set; } = Array.Empty<UploadedFileRequest>();
     }
 }

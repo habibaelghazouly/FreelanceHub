@@ -45,24 +45,53 @@ namespace FreelanceHub.Web.Controllers
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create(CreateJobViewModel model)
         {
-            Console.WriteLine("Model State: " + ModelState.IsValid);
             var userId = ((ClaimsIdentity)User.Identity).FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
+            try
+            {
+                CreateJobRequest request = ToCreateJobRequest(model, int.Parse(userId));
+                Console.WriteLine($"Request: Title={request.Title}, Description={request.Description}, Budget={request.Budget}, Deadline={request.Deadline}, ClientId={request.ClientId}, CategoryIds={request.CategoryIds}, SkillIds={request.SkillIds}, TagIds={request.TagIds}");
+                Console.WriteLine($"JobFiles Count: {request.JobFiles.Count}");
+                var result = await _jobService.CreateJobAsync(request, HttpContext.RequestAborted);
 
-            var result = await _jobService.CreateJobAsync(ToCreateJobRequest(model, int.Parse(userId)), HttpContext.RequestAborted);
-            // if (!result.Succeeded)
-            // {
-            //     AddErrors(result);
-            //     return View(model);
-            // }
+            }
+            catch (Exception)
+            {
 
-            return RedirectToAction("Index", "Home");
+                throw;
+            }
+
+            return RedirectToAction("MyJobs");
         }
-        public CreateJobRequest ToCreateJobRequest(CreateJobViewModel model , int userId)
+        public CreateJobRequest ToCreateJobRequest(CreateJobViewModel model, int userId)
         {
+            var openedStreams = new List<Stream>();
+            var jobFiles = new List<UploadedFileRequest>();
+
+            Console.WriteLine($"Model: Title={model.Title}, Description={model.Description}, Budget={model.Budget}, Deadline={model.Deadline}, ClientId={userId}, CategoryIds={model.CategoryIds}, SkillIds={model.SkillIds}, TagIds={model.TagIds}");
+            Console.WriteLine($"JobFiles Count: {model.JobFiles.Count}");
+            try
+            {
+                foreach (var jobFile in model.JobFiles.Where(file => file.Length > 0))
+                {
+                    Console.WriteLine($"Processing file: {jobFile.FileName}, Size: {jobFile.Length}, ContentType: {jobFile.ContentType}");
+                    var stream = jobFile.OpenReadStream();
+                    openedStreams.Add(stream);
+                    jobFiles.Add(new UploadedFileRequest(stream, jobFile.FileName, jobFile.ContentType, jobFile.Length));
+                }
+            }
+            catch
+            {
+                // Handle any exceptions that may occur while opening the streams
+                foreach (var stream in openedStreams)
+                {
+                    stream.Dispose();
+                }
+                throw;
+            }
             return new CreateJobRequest
             {
                 Title = model.Title,
@@ -70,17 +99,40 @@ namespace FreelanceHub.Web.Controllers
                 Budget = model.Budget,
                 Deadline = model.Deadline,
                 ClientId = userId,
-                CategoryIds = model.CategoryIds,
-                SkillIds = model.SkillIds,
-                TagIds = model.TagIds
+                CategoryIds = model.CategoryIds ?? string.Empty,
+                SkillIds = model.SkillIds ?? string.Empty,
+                TagIds = model.TagIds ?? string.Empty,
+                JobFiles = jobFiles
             };
         }
 
-        public IActionResult Index()
+        [Authorize(Roles = "Client")]
+        public async Task<IActionResult> MyJobs()
         {
-            return View();
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var jobs = await _jobService.GetJobsByClientIdAsync(userId);
+
+            return View(jobs);
         }
 
-        
+        public async Task<IActionResult> Index()
+        {
+            var jobs = await _jobService.GetAllJOpeningJobsAsync();
+
+            return View(jobs);
+        }
+
+        public async Task<IActionResult> DetailJob(int id)
+        {
+            var job = await _jobService.GetJobByIdAsync(id);
+
+            if (job == null)
+            {
+                return NotFound();
+            }
+
+            return View(job);
+        }
     }
 }
