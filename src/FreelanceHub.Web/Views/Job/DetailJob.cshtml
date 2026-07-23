@@ -202,7 +202,7 @@
 
                 @if (User.IsInRole("Freelancer"))
                 {
-                    <a asp-controller="Application" asp-action="submitApplication" asp-route-jobId="@Model.JobId"
+                    <a asp-controller="Applications" asp-action="Submit" asp-route-jobId="@Model.JobId"
                        class="btn btn-success">
                         Submit Application
                     </a>
@@ -216,7 +216,8 @@
                 {
 
                     
-                    <a asp-action="Applications" asp-route-id="@Model.JobId" class="btn btn-primary">
+                    <a asp-controller="Applications" asp-action="SubmittedApplications" asp-route-jobId="@Model.JobId"
+                       class="btn btn-outline-success">
                         View Applications
                     </a>
                     <a asp-action="MyJobs" class="btn btn-outline-secondary">
