@@ -72,7 +72,10 @@
                                 {
 
                                     <td>
-                                        @contract.ClientDisplayName
+                                       <a asp-controller="Profile" asp-action="Index" asp-route-id="@contract.ClientUserId"
+                                           class="fw-semibold text-decoration-none">
+                                            @contract.ClientDisplayName
+                                        </a>
                                     </td>
                                 }
 
