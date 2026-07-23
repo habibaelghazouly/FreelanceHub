@@ -16,7 +16,10 @@
         {
             return new ApplicationActionResult(true, Array.Empty<string>());
         }
-
+        public static ApplicationActionResult Success(int jobId)
+        {
+            return new ApplicationActionResult(true, new[] { jobId.ToString() });
+        }
         public static ApplicationActionResult Failed(params string[] errors)
         {
             return new ApplicationActionResult(false, errors);

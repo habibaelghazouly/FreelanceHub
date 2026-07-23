@@ -4,7 +4,9 @@ using FreelanceHub.Application.Exceptions;
 using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
+using FreelanceHub.Infrastructure.DataBase;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using ApplicationEntity = FreelanceHub.Domain.Models.Application;
 
@@ -25,17 +27,20 @@ namespace FreelanceHub.Application.Services.Implementations
         private readonly IAttachmentRepository _attachmentRepository;
         private readonly IFileUploadService _fileUploadService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ApplicationDbContext _dbContext;
 
         public ApplicationManagementService(
             IApplicationRepository applicationRepository,
             IAttachmentRepository attachmentRepository,
             IFileUploadService fileUploadService,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ApplicationDbContext dbContext)
         {
             _applicationRepository = applicationRepository;
             _attachmentRepository = attachmentRepository;
             _fileUploadService = fileUploadService;
             _unitOfWork = unitOfWork;
+            _dbContext = dbContext;
         }
 
         public async Task<ApplicationActionResult> SubmitApplicationAsync(SubmitApplicationRequest request, CancellationToken cancellationToken = default)
@@ -75,11 +80,10 @@ namespace FreelanceHub.Application.Services.Implementations
 
             try
             {
-                // 1. First save the Application so we have a valid ApplicationId
+               
                 await _applicationRepository.AddAsync(application, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // 2. Process and save attachments & join entity
                 foreach (var portfolioFile in request.PortfolioFiles)
                 {
                     var upload = await _fileUploadService.UploadPortfolioFileAsync(portfolioFile, PortfolioUploadsFolder, cancellationToken);
@@ -107,7 +111,6 @@ namespace FreelanceHub.Application.Services.Implementations
                     });
                 }
 
-                // 3. Save join entity changes and commit transaction
                 if (request.PortfolioFiles.Count > 0)
                 {
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -136,6 +139,135 @@ namespace FreelanceHub.Application.Services.Implementations
                 await RollbackAndCleanupUploadsAsync(uploadedPortfolioFiles, cancellationToken);
                 return ApplicationActionResult.Failed("Unable to process your application at this moment. Please try again.");
             }
+        }
+        public Task<Job?> GetOpenJobByIdAsync(int jobId, CancellationToken cancellationToken = default)
+        {
+            // Uses the repository method that already checks if job is Open and not deleted
+            return _applicationRepository.GetOpenJobByIdAsync(jobId, cancellationToken);
+        }
+        public async Task<FreelancerApplicationDashboardResult> GetFreelancerDashboardAsync(int freelancerUserId, CancellationToken cancellationToken = default)
+        {
+            var applications = await _applicationRepository.ListByFreelancerUserIdAsync(freelancerUserId, cancellationToken);
+
+            return new FreelancerApplicationDashboardResult
+            {
+                Applications = applications.Select(application => new FreelancerApplicationListItemResult
+                {
+                    ApplicationId = application.ApplicationId,
+                    JobId = application.JobId,
+                    JobTitle = application.Job.Title,
+                    ProposedAmount = application.ProposedAmount,
+                    TimelineDays = application.TimelineDays,
+                    ApplicationStatus = application.ApplicationStatus,
+                    PortfolioItemCount = application.ApplicationAttachments.Count,
+                    CreatedAt = application.CreatedAt
+                }).ToArray(),
+            };
+        }
+
+        public async Task<ClientApplicationDashboardResult> GetClientDashboardAsync(int clientUserId, int jobId, CancellationToken cancellationToken = default)
+        {
+            var applications = await _applicationRepository.ListByClientUserIdAsync(clientUserId, cancellationToken);
+
+            if (jobId > 0)
+            {
+                applications = applications.Where(app => app.JobId == jobId).ToList();
+            }
+
+            return new ClientApplicationDashboardResult
+            {
+                Applications = applications.Select(application => new ClientApplicationListItemResult
+                {
+                    ApplicationId = application.ApplicationId,
+                    JobId = application.JobId,
+                    JobTitle = application.Job.Title,
+                    FreelancerUserId = application.FreelancerUserId,
+                    FreelancerDisplayName = $"{application.FreelancerUser.FirstName} {application.FreelancerUser.LastName}".Trim(),
+                    ProposedAmount = application.ProposedAmount,
+                    TimelineDays = application.TimelineDays,
+                    ApplicationStatus = application.ApplicationStatus,
+                    SubmittedAt = application.CreatedAt
+                }).ToArray()
+            };
+        }
+        public async Task<List<FreelanceHub.Domain.Models.Application>> GetApplicationsForJobAsync(int jobId, int clientUserId, CancellationToken cancellationToken = default)
+        {
+            var job = await _dbContext.Jobs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.JobId == jobId, cancellationToken);
+
+            if (job == null)
+            {
+                return new List<FreelanceHub.Domain.Models.Application>();
+            }
+
+            if (job.ClientUserId != clientUserId)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view applications for this job.");
+            }
+            return await _applicationRepository.GetApplicationsByJobIdAsync(jobId, cancellationToken);
+        }
+
+        public async Task<ApplicationActionResult> UpdateApplicationStatusAsync(
+     UpdateApplicationStatusRequest request,
+     CancellationToken cancellationToken = default)
+        {
+            if (!AllowedClientStatuses.Contains(request.ApplicationStatus))
+            {
+                return ApplicationActionResult.Failed("Invalid status update.");
+            }
+
+            var application = await _applicationRepository.GetByIdForClientAsync(request.ApplicationId, request.ClientUserId, cancellationToken);
+            if (application is null)
+            {
+                return ApplicationActionResult.Failed("The selected application was not found.");
+            }
+
+            if (application.ApplicationStatus == request.ApplicationStatus)
+            {
+                return ApplicationActionResult.Success(application.JobId);
+            }
+
+            if (application.ApplicationStatus is ApplicationStatus.Accepted or ApplicationStatus.Rejected)
+            {
+                return ApplicationActionResult.Failed("Finalized applications cannot be changed.");
+            }
+
+            // Update Application Status
+            application.ApplicationStatus = request.ApplicationStatus;
+
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                // If status is Accepted, create the Contract record
+                if (request.ApplicationStatus == ApplicationStatus.Accepted)
+                {
+                    var contract = new Contract
+                    {
+                        JobId = application.JobId,
+                        AcceptedApplicationId = application.ApplicationId,
+                        AgreedAmount = application.ProposedAmount,
+                        ContractStatus = ContractStatus.Draft,
+                        StartDate = DateTime.UtcNow,
+                        ExpectedCompletionDate = DateTime.UtcNow.AddDays(application.TimelineDays),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _dbContext.Contracts.AddAsync(contract, cancellationToken);
+                   
+                }
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return ApplicationActionResult.Failed("Unable to update application status and create contract right now. Please try again.");
+            }
+
+            return ApplicationActionResult.Success(application.JobId);
         }
 
         private static List<string> ValidateSubmitRequest(SubmitApplicationRequest request)
