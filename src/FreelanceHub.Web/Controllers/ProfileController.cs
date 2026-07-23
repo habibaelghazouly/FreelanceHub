@@ -24,7 +24,8 @@ namespace FreelanceHub.Web.Controllers
 			_profileService = profileService;
 		}
 
-		[HttpGet]
+		[HttpGet("profile")]
+		[HttpGet("profile/{id:int}")]
 		public async Task<IActionResult> Index(int? id)
 		{
 			if (!TryGetCurrentUserId(out var currentUserId))
