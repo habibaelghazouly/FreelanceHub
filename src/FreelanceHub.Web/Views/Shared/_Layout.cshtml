@@ -32,7 +32,13 @@
                         @if (User.IsInRole("Freelancer"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Applications" asp-action="Submit">Submit Application</a>
+                                <a class="nav-link text-dark" asp-controller="Applications" asp-action="MyApplications">My Applications</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Client"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Applications" asp-action="SubmittedApplications">Submitted Applications</a>
                             </li>
                         }
 
