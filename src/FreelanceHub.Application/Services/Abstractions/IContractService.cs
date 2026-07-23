@@ -10,5 +10,7 @@ namespace FreelanceHub.Application.Services.Abstractions
 		Task<UpdateOperationResult> SubmitReviewAsync(int contractId, int currentUserId, SubmitReviewRequest request);
 
 		Task<IReadOnlyList<ReceivedReviewResult>> GetReceivedReviewsAsync(int userId);
+
+		Task<IReadOnlyList<ContractListResult>> GetContractsForUserAsync(int userId);
 	}
 }

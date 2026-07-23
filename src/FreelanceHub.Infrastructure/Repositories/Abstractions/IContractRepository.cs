@@ -8,6 +8,8 @@ namespace FreelanceHub.Infrastructure.Repositories.Abstractions
 
 		Task<IReadOnlyList<Review>> ListReceivedReviewsAsync(int userId);
 
+		Task<IReadOnlyList<Contract>> ListContractsForUserAsync(int userId);
+
 		Task AddReviewAsync(Review review);
 	}
 }
