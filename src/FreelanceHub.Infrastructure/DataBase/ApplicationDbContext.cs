@@ -37,6 +37,7 @@ namespace FreelanceHub.Infrastructure.DataBase
 		public DbSet<Review> Reviews => Set<Review>();
 
 		public DbSet<Application> Applications => Set<Application>();
+		public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
 		public DbSet<Category> Categories => Set<Category>();
 
