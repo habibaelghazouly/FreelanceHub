@@ -32,16 +32,22 @@
                         @if (User.IsInRole("Freelancer"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Jobs" asp-action="Browse">Jobs</a>
-                                <a class="nav-link text-dark" asp-controller="Applications" asp-action="MyApplications">My Applications</a>
+                            <a class="nav-link text-dark" asp-controller="Jobs" asp-action="Browse">Jobs</a></li>
+                            <li><a class="nav-link text-dark" asp-controller="Applications" asp-action="MyApplications">My
+                                Applications</a>
                             </li>
                         }
                         @if (User.IsInRole("Client"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Applications" asp-action="SubmittedApplications">Submitted Applications</a>
+                                <a class="nav-link text-dark" asp-controller="Job" asp-action="MyJobs">My Jobs</a>
                             </li>
+
                         }
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Contract"
+                               asp-action="Index">Contracts</a>
+                        </li>
 
                     </ul>
                     <ul class="navbar-nav">
@@ -58,62 +64,36 @@
                                     <button type="submit" class="btn btn-link nav-link text-dark">Logout</button>
                                 </form>
                             </li>
+                        }
+                        else
+                        {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Applications" asp-action="Submit">Submit
-                                    Application</a>
-                                </li>
-                            }else if (User.IsInRole("Client"))
-                            {
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+                            </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Job" asp-action="MyJobs">My Jobs</a>
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
                             </li>
                         }
-
-                        </ul>
-                        <ul class="navbar-nav">
-                            @if (User.Identity?.IsAuthenticated == true)
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Profile" asp-action="Index">Profile</a>
-                                </li>
-                                <li class="nav-item">
-                                    <span class="nav-link text-dark">Hello, @User.Identity.Name</span>
-                                </li>
-                                <li class="nav-item">
-                                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-link nav-link text-dark">Logout</button>
-                                    </form>
-                                </li>
-                            }
-                            else
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
-                                </li>
-                            }
-                        </ul>
-                    </div>
+                    </ul>
                 </div>
-            </nav>
-        </header>
-        <div class="@(ViewData["MainContainerClass"] as string ?? "container")">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
-        </div>
-
-        <footer class="border-top footer text-muted">
-            <div class="container">
-                &copy; 2026 - FreelanceHub - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
             </div>
-        </footer>
-        <script src="~/lib/jquery/dist/jquery.min.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="~/js/site.js" asp-append-version="true"></script>
-        @await RenderSectionAsync("Scripts", required: false)
-    </body>
+        </nav>
+    </header>
+    <div class="@(ViewData["MainContainerClass"] as string ?? "container")">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - FreelanceHub - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
 
 </html>

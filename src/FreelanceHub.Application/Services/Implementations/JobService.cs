@@ -110,6 +110,8 @@ namespace FreelanceHub.Application.Services.Implementations
                     .ThenInclude(js => js.Skill)
                 .Include(j => j.JobTags)
                     .ThenInclude(jt => jt.Tag)
+                .Include(j => j.Applications)
+                    .ThenInclude(a => a.FreelancerUser)
                 .ToListAsync(cancellationToken);
         }
 

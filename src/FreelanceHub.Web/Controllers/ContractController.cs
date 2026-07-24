@@ -90,5 +90,16 @@ namespace FreelanceHub.Web.Controllers
 		{
 			return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
 		}
+
+		public async Task<IActionResult> Index()
+		{
+			if (!TryGetCurrentUserId(out var userId))
+			{
+				return Challenge();
+			}
+
+			var contracts = await _contractService.GetContractsForUserAsync(userId);
+			return View(contracts);
+		}
 	}
 }

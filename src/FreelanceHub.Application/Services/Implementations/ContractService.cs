@@ -184,5 +184,38 @@ namespace FreelanceHub.Application.Services.Implementations
 			var fullName = $"{user.FirstName} {user.LastName}".Trim();
 			return string.IsNullOrWhiteSpace(fullName) ? user.UserName ?? "User" : fullName;
 		}
+
+		public async Task<IReadOnlyList<ContractListResult>> GetContractsForUserAsync(int userId)
+		{
+			var contracts = await _contractRepository.ListContractsForUserAsync(userId);
+			return contracts.Select(contract => new ContractListResult
+			{
+
+				ContractId = contract.ContractId,
+				JobTitle = contract.Job.Title,
+				AgreedAmount = contract.AgreedAmount,
+				ContractStatus = GetContractStatusDisplayName(contract.ContractStatus),
+				StartDate = contract.StartDate,
+				ExpectedCompletionDate = contract.ExpectedCompletionDate,
+				ActualCompletionDate = contract.ActualCompletionDate,
+				ClientDisplayName = GetDisplayName(contract.Job.ClientUser),
+				FreelancerDisplayName = GetDisplayName(contract.AcceptedApplication.FreelancerUser),
+				ClientUserId = contract.Job.ClientUserId,
+				FreelancerUserId = contract.AcceptedApplication.FreelancerUserId
+			}).ToArray();
+		}
+
+		public string GetContractStatusDisplayName(ContractStatus status)
+		{
+			return status switch
+			{
+				ContractStatus.Accepted => "Accepted",
+				ContractStatus.Rejected => "Rejected",
+				ContractStatus.Draft => "Draft",
+				ContractStatus.Completed => "Completed",
+				ContractStatus.Terminated => "Terminated",
+				_ => "Unknown"
+			};
+		}
 	}
 }

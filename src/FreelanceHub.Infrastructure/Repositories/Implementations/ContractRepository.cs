@@ -47,5 +47,20 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 		{
 			await _dbContext.Reviews.AddAsync(review);
 		}
+
+		public async Task<IReadOnlyList<Contract>> ListContractsForUserAsync(int userId)
+		{
+			return await _dbContext.Contracts
+				.AsNoTracking()
+				.Include(contract => contract.Job)
+					.ThenInclude(job => job.ClientUser)
+				.Include(contract => contract.AcceptedApplication)
+					.ThenInclude(application => application.FreelancerUser)
+				.Where(contract =>
+					contract.Job.ClientUserId == userId
+					|| contract.AcceptedApplication.FreelancerUserId == userId)
+				.OrderByDescending(contract => contract.StartDate)
+				.ToListAsync();
+		}
 	}
 }
