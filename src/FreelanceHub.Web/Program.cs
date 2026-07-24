@@ -5,6 +5,7 @@ using FreelanceHub.Infrastructure.DataBase;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using FreelanceHub.Infrastructure.Repositories.Implementations;
 using FreelanceHub.Infrastructure.Storage;
+using FreelanceHub.Web.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,6 +45,7 @@ namespace FreelanceHub.Web
 			});
 
 			builder.Services.AddControllersWithViews();
+			builder.Services.AddSignalR();
 
 			var webRootPath = builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 			builder.Services.AddSingleton(new FileStorageOptions
@@ -65,6 +67,8 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IJobService, JobService>();
 			builder.Services.AddScoped<IContractService, ContractService>();
 			builder.Services.AddScoped<IContractRepository, ContractRepository>();
+			builder.Services.AddScoped<IChatService, ChatService>();
+			builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 
             builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
             builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
@@ -86,6 +90,8 @@ namespace FreelanceHub.Web
 
 			app.UseAuthentication();
 			app.UseAuthorization();
+
+			app.MapHub<ChatHub>("/hubs/chat");
 
 			app.MapControllerRoute(
 				name: "default",
