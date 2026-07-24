@@ -48,6 +48,12 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Contract"
                                asp-action="Index">Contracts</a>
                         </li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Chat" asp-action="Inbox">Messages</a>
+                            </li>
+                        }
 
                     </ul>
                     <ul class="navbar-nav">

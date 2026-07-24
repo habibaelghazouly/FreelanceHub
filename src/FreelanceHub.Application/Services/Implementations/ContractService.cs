@@ -41,6 +41,7 @@ namespace FreelanceHub.Application.Services.Implementations
 			return new ContractDetailsResult
 			{
 				ContractId = contract.ContractId,
+				AcceptedApplicationId = contract.AcceptedApplicationId,
 				JobId = contract.JobId,
 				JobTitle = contract.Job.Title,
 				AgreedAmount = contract.AgreedAmount,
@@ -192,6 +193,7 @@ namespace FreelanceHub.Application.Services.Implementations
 			{
 
 				ContractId = contract.ContractId,
+				AcceptedApplicationId = contract.AcceptedApplicationId,
 				JobTitle = contract.Job.Title,
 				AgreedAmount = contract.AgreedAmount,
 				ContractStatus = GetContractStatusDisplayName(contract.ContractStatus),

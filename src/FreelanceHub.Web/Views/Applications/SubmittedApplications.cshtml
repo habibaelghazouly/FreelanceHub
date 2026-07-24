@@ -105,15 +105,16 @@
 
                                 <!-- Actions Column -->
                                 <td class="text-end pe-4">
-                                    @if (item.ApplicationStatus == ApplicationStatus.Accepted || item.ApplicationStatus == ApplicationStatus.Rejected)
-                                    {
-                                        <!-- Hide Buttons once Decision is Made -->
-                                        <span class="text-muted small fst-italic">Completed</span>
-                                    }
-                                    else
-                                    {
-                                        <!-- Render Buttons only when status is pending / submitted / under review -->
-                                        <div class="d-inline-flex gap-2">
+                                    <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                        <a asp-controller="Chat" asp-action="Thread"
+                                           asp-route-applicationId="@item.ApplicationId"
+                                           class="btn btn-sm btn-outline-primary rounded-3 px-3">Open chat</a>
+                                        @if (item.ApplicationStatus == ApplicationStatus.Accepted || item.ApplicationStatus == ApplicationStatus.Rejected)
+                                        {
+                                            <span class="text-muted small fst-italic align-self-center">Completed</span>
+                                        }
+                                        else
+                                        {
                                             <!-- Accept Button Form -->
                                             <form asp-controller="Applications" asp-action="UpdateStatus" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
@@ -133,8 +134,8 @@
                                                     <i class="bi bi-x-lg"></i> Reject
                                                 </button>
                                             </form>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }

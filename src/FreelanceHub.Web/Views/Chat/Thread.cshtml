@@ -1,0 +1,63 @@
+@model ChatThreadViewModel
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+}
+
+@{
+    ViewData["Title"] = $"Messages - {Model.Thread.JobTitle}";
+    ViewData["MainContainerClass"] = "container-fluid px-3 px-lg-4";
+    var thread = Model.Thread;
+    var avatarUrl = string.IsNullOrWhiteSpace(thread.OtherUserProfileImageUrl)
+        ? Url.Content("~/img/default-avatar.svg")
+        : thread.OtherUserProfileImageUrl;
+}
+
+<div id="chat-thread" class="chat-thread-page"
+     data-application-id="@thread.ApplicationId"
+     data-current-user-id="@thread.CurrentUserId">
+    <header class="chat-thread-header">
+        <a asp-controller="Chat" asp-action="Inbox" class="chat-back-link">Back to messages</a>
+        <div class="chat-thread-person">
+            <img src="@avatarUrl" alt="@thread.OtherUserDisplayName" />
+            <div>
+                <a asp-controller="Profile" asp-action="Index" asp-route-id="@thread.OtherUserId">@thread.OtherUserDisplayName</a>
+                <span>@thread.JobTitle</span>
+            </div>
+        </div>
+        <span class="chat-status">@thread.ApplicationStatus</span>
+    </header>
+
+    <div id="chat-connection-status" class="chat-connection-status" role="status">Connecting...</div>
+
+    <main id="chat-message-list" class="chat-message-list" aria-live="polite">
+        <div id="chat-empty-message" class="chat-thread-empty" @(thread.Messages.Count > 0 ? "hidden" : null)>
+            No messages yet. Start the conversation.
+        </div>
+        @foreach (var message in thread.Messages)
+        {
+            var isOwnMessage = message.SenderUserId == thread.CurrentUserId;
+            <article class="chat-message @(isOwnMessage ? "is-own" : "is-other")"
+                     data-message-id="@message.ChatMessageId">
+                <div class="chat-message-bubble">
+                    <strong>@message.SenderDisplayName</strong>
+                    <p>@message.Content</p>
+                    <time datetime="@message.SentAt.ToString("O")">@message.SentAt.ToLocalTime().ToString("g")</time>
+                </div>
+            </article>
+        }
+    </main>
+
+    <form id="chat-message-form" class="chat-message-form">
+        <label class="visually-hidden" for="chat-message-input">Message</label>
+        <textarea id="chat-message-input" rows="2" maxlength="2000"
+                  placeholder="Write a message..." required></textarea>
+        <button id="chat-send-button" type="submit" disabled>Send</button>
+    </form>
+    <div id="chat-error" class="chat-error" role="alert" hidden></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@9.0.6/dist/browser/signalr.min.js"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
+}

@@ -6,6 +6,8 @@ namespace FreelanceHub.Application.DTOs.Results
 	{
 		public int ContractId { get; set; }
 
+		public int AcceptedApplicationId { get; set; }
+
 		public int JobId { get; set; }
 
 		public string JobTitle { get; set; } = string.Empty;

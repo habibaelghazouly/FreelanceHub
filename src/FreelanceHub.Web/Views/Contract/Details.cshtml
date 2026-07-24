@@ -21,6 +21,9 @@
             <div class="text-end">
                 <span class="text-muted d-block small">Agreed amount</span>
                 <strong class="fs-4">@contract.AgreedAmount.ToString("C")</strong>
+                <a asp-controller="Chat" asp-action="Thread"
+                   asp-route-applicationId="@contract.AcceptedApplicationId"
+                   class="btn btn-outline-primary btn-sm d-block mt-2">Open chat</a>
             </div>
         </div>
 

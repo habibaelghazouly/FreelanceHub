@@ -44,6 +44,7 @@
                                     <th>Status</th>
                                     <th>Portfolio</th>
                                     <th>Submitted</th>
+                                    <th>Messages</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -56,6 +57,11 @@
                                         <td>@FormatStatus(application.ApplicationStatus)</td>
                                         <td>@application.PortfolioItemCount file(s)</td>
                                         <td>@application.SubmittedAt.ToLocalTime().ToString("g")</td>
+                                        <td>
+                                            <a asp-controller="Chat" asp-action="Thread"
+                                               asp-route-applicationId="@application.ApplicationId"
+                                               class="btn btn-sm btn-outline-primary">Open chat</a>
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
