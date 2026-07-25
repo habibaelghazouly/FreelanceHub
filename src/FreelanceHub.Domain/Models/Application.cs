@@ -28,5 +28,7 @@ namespace FreelanceHub.Domain.Models
 
         public ICollection<ApplicationAttachment> ApplicationAttachments { get; set; } = new List<ApplicationAttachment>();
 
+        public ICollection<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
+
     }
 }

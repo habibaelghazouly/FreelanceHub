@@ -1,0 +1,49 @@
+@model ChatInboxViewModel
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+}
+
+@{
+    ViewData["Title"] = "Messages";
+}
+
+<div class="chat-page py-4">
+    @if (Model.Applications.Count == 0)
+    {
+        <div class="chat-empty-state">
+            <h2>No conversations yet</h2>
+            <p>Your application conversations will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="chat-inbox-list">
+            @foreach (var application in Model.Applications)
+            {
+                var avatarUrl = string.IsNullOrWhiteSpace(application.OtherUserProfileImageUrl)
+                    ? Url.Content("~/img/default-avatar.svg")
+                    : application.OtherUserProfileImageUrl;
+
+                <a asp-controller="Chat" asp-action="Thread" asp-route-applicationId="@application.ApplicationId"
+                   class="chat-inbox-item">
+                    <img src="@avatarUrl" alt="@application.OtherUserDisplayName" />
+                    <div class="chat-inbox-content">
+                        <div class="chat-inbox-title">
+                            <strong>@application.OtherUserDisplayName</strong>
+                            @if (application.LatestMessageAt.HasValue)
+                            {
+                                <time datetime="@application.LatestMessageAt.Value.ToString("O")">
+                                    @application.LatestMessageAt.Value.ToLocalTime().ToString("g")
+                                </time>
+                            }
+                        </div>
+                        <span class="chat-job-title">@application.JobTitle</span>
+                        <p>@(string.IsNullOrWhiteSpace(application.LatestMessage) ? "No messages yet" : application.LatestMessage)</p>
+                    </div>
+                    <span class="chat-status">@application.ApplicationStatus</span>
+                </a>
+            }
+        </div>
+    }
+</div>

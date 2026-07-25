@@ -113,11 +113,16 @@
                                 </td>
 
                                 <td class="text-center">
-                                    <a asp-action="Details" asp-route-id="@contract.ContractId"
-                                       class="btn btn-outline-primary btn-sm">
-                                        <i class="bi bi-eye"></i>
-                                        Details
-                                    </a>
+                                    <div class="d-inline-flex gap-2">
+                                        <a asp-action="Details" asp-route-id="@contract.ContractId"
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                            Details
+                                        </a>
+                                        <a asp-controller="Chat" asp-action="Thread"
+                                           asp-route-applicationId="@contract.AcceptedApplicationId"
+                                           class="btn btn-outline-secondary btn-sm">Chat</a>
+                                    </div>
                                 </td>
                             </tr>
                         }

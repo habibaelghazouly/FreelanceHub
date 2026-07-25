@@ -28,6 +28,8 @@ namespace FreelanceHub.Domain.Models
 
 		public ICollection<Application> Applications { get; set; } = new List<Application>();
 
+		public ICollection<ChatMessage> SentChatMessages { get; set; } = new List<ChatMessage>();
+
 
 	}
 }
