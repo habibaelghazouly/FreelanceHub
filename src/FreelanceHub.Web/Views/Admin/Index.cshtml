@@ -1,0 +1,56 @@
+@model AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="py-4">
+    <div class="mb-4">
+        <h1 class="h2 mb-1">Admin Dashboard</h1>
+        <p class="text-muted mb-0">Platform-wide view of clients, freelancers, jobs, and contracts.</p>
+    </div>
+
+    @if (TempData["AdminSuccess"] is string success)
+    {
+        <div class="alert alert-success">@success</div>
+    }
+    @if (TempData["AdminError"] is string error)
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><span class="text-muted">Freelancers</span><div class="fs-3 fw-bold">@Model.FreelancerCount</div></div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><span class="text-muted">Clients</span><div class="fs-3 fw-bold">@Model.ClientCount</div></div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><span class="text-muted">Jobs</span><div class="fs-3 fw-bold">@Model.JobCount</div></div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><span class="text-muted">Contracts</span><div class="fs-3 fw-bold">@Model.ContractCount</div></div></div></div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4"><div class="card-body p-0"><div class="table-responsive">
+        <table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Job</th><th>Client</th><th>Budget</th><th>Applications</th><th>Status</th><th></th></tr></thead><tbody>
+        @foreach (var job in Model.Jobs)
+        {
+            <tr><td>@job.Title</td><td>@job.ClientName</td><td>@job.Budget.ToString("C")</td><td>@job.ApplicationCount</td><td>@job.Status</td><td class="text-end">
+                @if (job.CanRevoke)
+                {
+                    <form asp-action="RevokeJob" asp-route-id="@job.JobId" method="post" class="d-inline"><button class="btn btn-outline-danger btn-sm" type="submit">Revoke job</button></form>
+                }
+            </td></tr>
+        }
+        </tbody></table>
+    </div></div></div>
+
+    <div class="card border-0 shadow-sm mb-4"><div class="card-body p-0"><div class="table-responsive">
+        <table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Contract</th><th>Job</th><th>Client</th><th>Freelancer</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+        @foreach (var contract in Model.Contracts)
+        {
+            <tr><td>#@contract.ContractId</td><td>@contract.JobTitle</td><td>@contract.ClientName</td><td>@contract.FreelancerName</td><td>@contract.Amount.ToString("C")</td><td>@contract.Status</td></tr>
+        }
+        </tbody></table>
+    </div></div></div>
+
+    <div class="row g-4">
+        <div class="col-lg-6"><div class="card border-0 shadow-sm"><div class="card-body"><h2 class="h5">Freelancers</h2><ul class="list-group list-group-flush">@foreach (var user in Model.Freelancers) { <li class="list-group-item px-0"><a asp-controller="Profile" asp-action="Index" asp-route-id="@user.UserId">@user.Name</a><span class="text-muted"> · @user.Email · @user.Status</span></li> }</ul></div></div></div>
+        <div class="col-lg-6"><div class="card border-0 shadow-sm"><div class="card-body"><h2 class="h5">Clients</h2><ul class="list-group list-group-flush">@foreach (var user in Model.Clients) { <li class="list-group-item px-0"><a asp-controller="Profile" asp-action="Index" asp-route-id="@user.UserId">@user.Name</a><span class="text-muted"> · @user.Email · @user.Status</span></li> }</ul></div></div></div>
+    </div>
+</div>
