@@ -17,14 +17,14 @@
 
         @if (Model.IsClient)
         {
-            <a asp-controller="Applications" asp-action="SubmittedApplications" asp-route-jobId="@Model.JobId" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to Applications
+            <a asp-controller="Job" asp-action="MyJobs" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to My Jobs
             </a>
         }
         else
         {
-            <a asp-controller="Applications" asp-action="MyApplications" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to My Applications
+            <a asp-controller="Jobs" asp-action="Browse" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Jobs
             </a>
         }
     </div>
@@ -47,13 +47,73 @@
     }
 
     <div class="row g-4">
-        <!-- Main Proposal Content (Cover Letter) -->
+        <!-- Main Content Column -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
+            <!-- Cover Letter Card -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
                 <h5 class="fw-bold mb-3">Cover Letter</h5>
                 <p class="text-secondary style-cover-letter mb-0" style="white-space: pre-line;">
                     @(string.IsNullOrWhiteSpace(Model.CoverLetter) ? "No cover letter provided." : Model.CoverLetter)
                 </p>
+            </div>
+
+            <!-- Attachments / Portfolio Files Card -->
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-paperclip me-2 text-primary"></i>Attached Files (@Model.Attachments.Count)
+                </h5>
+
+                @if (Model.Attachments == null || Model.Attachments.Count == 0)
+                {
+                    <p class="text-muted mb-0 small">No attachments included with this application.</p>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var file in Model.Attachments)
+                        {
+                            var ext = file.FileExtension?.ToLowerInvariant() ?? "";
+
+                            <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 py-3">
+                                <div class="d-flex align-items-center me-3 text-truncate">
+                                    <!-- Dynamic Icon Selection based on MIME Type / Extension -->
+                                    <div class="me-3 fs-3">
+                                        @if (ext.Contains("pdf"))
+                                        {
+                                            <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                                        }
+                                        else if (ext.Contains("image") || ext.Contains("png") || ext.Contains("jpg") || ext.Contains("jpeg") || ext.Contains("webp"))
+                                        {
+                                            <i class="bi bi-file-earmark-image-fill text-info"></i>
+                                        }
+                                        else if (ext.Contains("word") || ext.Contains("doc"))
+                                        {
+                                            <i class="bi bi-file-earmark-word-fill text-primary"></i>
+                                        }
+                                        else if (ext.Contains("zip") || ext.Contains("rar") || ext.Contains("7z"))
+                                        {
+                                            <i class="bi bi-file-earmark-zip-fill text-warning"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-file-earmark-arrow-down-fill text-secondary"></i>
+                                        }
+                                    </div>
+                                    <div class="text-truncate">
+                                        <h6 class="mb-0 text-dark text-truncate fw-semibold">@file.FileName</h6>
+                                    </div>
+                                </div>
+
+                                <a href="@file.FilePath"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="btn btn-sm btn-outline-primary rounded-3 text-nowrap px-3">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> View / Download
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
 
@@ -104,33 +164,31 @@
                     }
                 </div>
 
-@if (Model.IsClient && Model.ApplicationStatus != ApplicationStatus.Accepted && Model.ApplicationStatus != ApplicationStatus.Rejected)
-{
-    <hr class="my-3" />
-    <div class="d-grid gap-2">
-        <!-- Accept Form -->
-        <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
-            <input type="hidden" name="jobId" value="@Model.JobId" />
-            <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Accepted" />
-            <button type="submit" class="btn btn-success w-100 rounded-3">
-                <i class="bi bi-check-lg me-1"></i> Accept Proposal
-            </button>
-        </form>
+                <!-- Accept/Reject Actions for Client -->
+                @if (Model.IsClient && Model.ApplicationStatus != ApplicationStatus.Accepted && Model.ApplicationStatus != ApplicationStatus.Rejected)
+                {
+                    <hr class="my-3" />
+                    <div class="d-grid gap-2">
+                        <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+                            <input type="hidden" name="jobId" value="@Model.JobId" />
+                            <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Accepted" />
+                            <button type="submit" class="btn btn-success w-100 rounded-3">
+                                <i class="bi bi-check-lg me-1"></i> Accept Proposal
+                            </button>
+                        </form>
 
-        <!-- Reject Form -->
-        <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
-            <input type="hidden" name="jobId" value="@Model.JobId" />
-            <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Rejected" />
-            <button type="submit" class="btn btn-outline-danger w-100 rounded-3">
-                <i class="bi bi-x-lg me-1"></i> Reject Proposal
-            </button>
-        </form>
-    </div>
-
+                        <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+                            <input type="hidden" name="jobId" value="@Model.JobId" />
+                            <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Rejected" />
+                            <button type="submit" class="btn btn-outline-danger w-100 rounded-3">
+                                <i class="bi bi-x-lg me-1"></i> Reject Proposal
+                            </button>
+                        </form>
+                    </div>
                 }
             </div>
         </div>

@@ -85,6 +85,7 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
                 .Include(a => a.Job)
                 .Include(a => a.FreelancerUser)
                 .Include(a => a.ApplicationAttachments)
+                .ThenInclude(aa => aa.Attachment)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.ApplicationId == applicationId, cancellationToken);
         }

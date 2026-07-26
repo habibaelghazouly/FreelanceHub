@@ -1,6 +1,7 @@
 ﻿using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using System;
+using System.Collections.Generic;
 
 namespace FreelanceHub.Web.ViewModels
 {
@@ -17,5 +18,8 @@ namespace FreelanceHub.Web.ViewModels
         public DateTime SubmittedAt { get; set; }
         public ApplicationStatus ApplicationStatus { get; set; }
         public bool IsClient { get; set; }
+
+        public List<ApplicationAttachmentViewModel> Attachments { get; set; } = new();
     }
+
 }

@@ -218,6 +218,7 @@ namespace FreelanceHub.Web.Controllers
             var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(claimValue, out userId);
         }
+
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Details(int id)
@@ -254,7 +255,31 @@ namespace FreelanceHub.Web.Controllers
                     CoverLetter = application.CoverLetter,
                     SubmittedAt = application.CreatedAt,
                     ApplicationStatus = application.ApplicationStatus,
-                    IsClient = isClient
+                    IsClient = isClient,
+
+                    Attachments = application.ApplicationAttachments?.Select(item =>
+                    {
+                        var fileName = item.Attachment?.OriginalFileName ?? "Attachment";
+
+                        // Make sure we access the full relative path or append the stored file name
+                        var rawPath = item.Attachment?.FileUrl
+                                   ?? $"/uploads/application-portfolios/{item.Attachment?.StoredFileName}";
+
+                        // Ensure leading slash
+                        if (!string.IsNullOrEmpty(rawPath) && !rawPath.StartsWith("/"))
+                        {
+                            rawPath = "/" + rawPath;
+                        }
+
+                        return new ApplicationAttachmentViewModel
+                        {
+                            AttachmentId = item.AttachmentId,
+                            FileName = fileName,
+                            FilePath = rawPath,
+                            FileExtension = item.Attachment?.ContentType
+                                             ?? Path.GetExtension(fileName)
+                        };
+                    }).ToList() ?? new List<ApplicationAttachmentViewModel>()
                 };
 
                 return View(viewModel);
@@ -265,5 +290,6 @@ namespace FreelanceHub.Web.Controllers
             }
         }
     }
- }
+    }
+ 
 
