@@ -1,0 +1,138 @@
+﻿@using FreelanceHub.Domain.Models
+@model FreelanceHub.Web.ViewModels.ApplicationDetailsViewModel
+
+@{
+    ViewData["Title"] = $"Proposal Details - {Model.FreelancerName}";
+}
+
+<div class="container py-4">
+    <!-- Header / Navigation -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Application Details</h2>
+            <p class="text-muted mb-0">
+                Applied for <strong class="text-dark">@(Model.JobTitle ?? $"Job #{Model.JobId}")</strong>
+            </p>
+        </div>
+
+        @if (Model.IsClient)
+        {
+            <a asp-controller="Applications" asp-action="SubmittedApplications" asp-route-jobId="@Model.JobId" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Applications
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Applications" asp-action="MyApplications" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to My Applications
+            </a>
+        }
+    </div>
+
+    <!-- Alert Notifications -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Main Proposal Content (Cover Letter) -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold mb-3">Cover Letter</h5>
+                <p class="text-secondary style-cover-letter mb-0" style="white-space: pre-line;">
+                    @(string.IsNullOrWhiteSpace(Model.CoverLetter) ? "No cover letter provided." : Model.CoverLetter)
+                </p>
+            </div>
+        </div>
+
+        <!-- Sidebar Column: Summary & Actions -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold mb-3">Proposal Summary</h5>
+                
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Freelancer</label>
+                    <span class="fw-semibold text-dark fs-6">@(Model.FreelancerName ?? "Freelancer")</span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Proposed Bid Amount</label>
+                    <span class="fw-bold text-success fs-5">$@Model.ProposedAmount.ToString("N2")</span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Estimated Timeline</label>
+                    <span class="fw-semibold text-dark">@Model.TimelineDays Days</span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Submitted On</label>
+                    <span class="text-dark">@Model.SubmittedAt.ToString("MMMM dd, yyyy")</span>
+                </div>
+
+                <div class="mb-4">
+                    <label class="text-muted small d-block mb-1">Status</label>
+                    @switch (Model.ApplicationStatus)
+                    {
+                        case ApplicationStatus.Accepted:
+                            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-medium">Accepted</span>
+                            break;
+                        case ApplicationStatus.Rejected:
+                            <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill fw-medium">Rejected</span>
+                            break;
+                        case ApplicationStatus.UnderReview:
+                            <span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2 rounded-pill fw-medium">Under Review</span>
+                            break;
+                        case ApplicationStatus.Submitted:
+                            <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill fw-medium">Submitted</span>
+                            break;
+                        default:
+                            <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill fw-medium">@Model.ApplicationStatus.ToString()</span>
+                            break;
+                    }
+                </div>
+
+@if (Model.IsClient && Model.ApplicationStatus != ApplicationStatus.Accepted && Model.ApplicationStatus != ApplicationStatus.Rejected)
+{
+    <hr class="my-3" />
+    <div class="d-grid gap-2">
+        <!-- Accept Form -->
+        <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+            <input type="hidden" name="jobId" value="@Model.JobId" />
+            <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Accepted" />
+            <button type="submit" class="btn btn-success w-100 rounded-3">
+                <i class="bi bi-check-lg me-1"></i> Accept Proposal
+            </button>
+        </form>
+
+        <!-- Reject Form -->
+        <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+            <input type="hidden" name="jobId" value="@Model.JobId" />
+            <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Rejected" />
+            <button type="submit" class="btn btn-outline-danger w-100 rounded-3">
+                <i class="bi bi-x-lg me-1"></i> Reject Proposal
+            </button>
+        </form>
+    </div>
+
+                }
+            </div>
+        </div>
+    </div>
+</div>
