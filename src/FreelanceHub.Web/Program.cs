@@ -75,6 +75,8 @@ namespace FreelanceHub.Web
 
             var app = builder.Build();
 
+			SeedAdminAsync(app.Services, builder.Configuration).GetAwaiter().GetResult();
+
 			// Configure the HTTP request pipeline.
 			if (!app.Environment.IsDevelopment())
 			{
@@ -98,6 +100,54 @@ namespace FreelanceHub.Web
 				pattern: "{controller=Home}/{action=Index}/{id?}");
 
 			app.Run();
+		}
+
+		private static async Task SeedAdminAsync(IServiceProvider services, IConfiguration configuration)
+		{
+			const string adminRole = "Admin";
+			var email = configuration["AdminSeed:Email"] ?? "admin@freelancehub.local";
+			var password = configuration["AdminSeed:Password"] ?? "Admin123!";
+
+			using var scope = services.CreateScope();
+			var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+			var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+			if (!await roleManager.RoleExistsAsync(adminRole))
+			{
+				var roleResult = await roleManager.CreateAsync(new IdentityRole<int>(adminRole));
+				if (!roleResult.Succeeded)
+				{
+					throw new InvalidOperationException($"Unable to create the Admin role: {string.Join("; ", roleResult.Errors.Select(error => error.Description))}");
+				}
+			}
+
+			var admin = await userManager.FindByEmailAsync(email);
+			if (admin is null)
+			{
+				admin = new ApplicationUser
+				{
+					UserName = email,
+					Email = email,
+					EmailConfirmed = true,
+					FirstName = "System",
+					LastName = "Administrator"
+				};
+
+				var createResult = await userManager.CreateAsync(admin, password);
+				if (!createResult.Succeeded)
+				{
+					throw new InvalidOperationException($"Unable to create the admin account: {string.Join("; ", createResult.Errors.Select(error => error.Description))}");
+				}
+			}
+
+			if (!await userManager.IsInRoleAsync(admin, adminRole))
+			{
+				var addRoleResult = await userManager.AddToRoleAsync(admin, adminRole);
+				if (!addRoleResult.Succeeded)
+				{
+					throw new InvalidOperationException($"Unable to assign the Admin role: {string.Join("; ", addRoleResult.Errors.Select(error => error.Description))}");
+				}
+			}
 		}
 	}
 }
