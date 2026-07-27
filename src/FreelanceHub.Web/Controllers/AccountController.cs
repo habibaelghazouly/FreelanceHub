@@ -3,8 +3,10 @@ using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Web.ViewModels;
+using FreelanceHub.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FreelanceHub.Web.Controllers
 {
@@ -13,10 +15,17 @@ namespace FreelanceHub.Web.Controllers
 		private const long MaxRegistrationRequestSize = 2_228_224;
 
 		private readonly IApplicationUserService _applicationUserService;
+		private readonly IEmailSender _emailSender;
+		private readonly string _publicBaseUrl;
 
-		public AccountController(IApplicationUserService applicationUserService)
+		public AccountController(
+			IApplicationUserService applicationUserService,
+			IEmailSender emailSender,
+			IOptions<SmtpOptions> smtpOptions)
 		{
 			_applicationUserService = applicationUserService;
+			_emailSender = emailSender;
+			_publicBaseUrl = smtpOptions.Value.PublicBaseUrl;
 		}
 
 		[HttpGet]
@@ -206,6 +215,110 @@ namespace FreelanceHub.Web.Controllers
 
 			TempData["AccountSettingsSuccess"] = "Your password was changed.";
 			return RedirectToAction(nameof(Manage));
+		}
+
+		[HttpGet]
+		[AllowAnonymous]
+		public IActionResult ForgotPassword()
+		{
+			return View(new ForgotPasswordViewModel());
+		}
+
+		[HttpPost]
+		[AllowAnonymous]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+		{
+			if (!ModelState.IsValid)
+			{
+				return View(model);
+			}
+
+			var tokenResult = await _applicationUserService.CreatePasswordResetTokenAsync(model.Email);
+			if (tokenResult is not null)
+			{
+				var resetPath = Url.Action(
+					nameof(ResetPassword),
+					"Account",
+					new { email = tokenResult.Email, code = tokenResult.Token });
+
+				if (resetPath is not null && Uri.TryCreate(_publicBaseUrl, UriKind.Absolute, out var publicBaseUri))
+				{
+					var resetUrl = new Uri(publicBaseUri, resetPath).ToString();
+					try
+					{
+						await _emailSender.SendAsync(
+							tokenResult.Email,
+							"Reset your FreelanceHub password",
+							$"Use the link below to reset your password:\n\n{resetUrl}\n\nIf you did not request this, you can ignore this email.");
+					}
+					catch
+					{
+						// we just keeep it the same for any errors , so we don't leak info about email or account
+					}
+				}
+			}
+
+			return RedirectToAction(nameof(ForgotPasswordConfirmation));
+		}
+
+		[HttpGet]
+		[AllowAnonymous]
+		public IActionResult ForgotPasswordConfirmation()
+		{
+			return View();
+		}
+
+		[HttpGet]
+		[AllowAnonymous]
+		public IActionResult ResetPassword(string? email, string? code)
+		{
+			if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(code))
+			{
+				return RedirectToAction(nameof(ForgotPassword));
+			}
+
+			return View(new ResetPasswordViewModel { Email = email, Code = code });
+		}
+
+		[HttpPost]
+		[AllowAnonymous]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+		{
+			if (!ModelState.IsValid)
+			{
+				return View(model);
+			}
+
+			var result = await _applicationUserService.ResetPasswordAsync(new ResetPasswordRequest
+			{
+				Email = model.Email,
+				Token = model.Code,
+				NewPassword = model.NewPassword
+			});
+
+			if (result.Succeeded)
+			{
+				return RedirectToAction(nameof(ResetPasswordConfirmation));
+			}
+
+			foreach (var error in result.Errors)
+			{
+				var key = error.FieldName == nameof(ResetPasswordRequest.NewPassword)
+					? nameof(ResetPasswordViewModel.NewPassword)
+					: string.Empty;
+				ModelState.AddModelError(key, error.Message);
+			}
+
+			return View(model);
+		}
+
+		[HttpGet]
+		[AllowAnonymous]
+		public IActionResult ResetPasswordConfirmation()
+		{
+			return View();
 		}
 
 		[HttpGet]
