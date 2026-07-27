@@ -282,6 +282,50 @@ namespace FreelanceHub.Application.Services.Implementations
 			return UpdateOperationResult.Success();
 		}
 
+		public async Task<PasswordResetTokenResult?> CreatePasswordResetTokenAsync(string email)
+		{
+			if (string.IsNullOrWhiteSpace(email))
+			{
+				return null;
+			}
+
+			var user = await _userManager.FindByEmailAsync(email.Trim());
+			if (user is null || user.UserStatus != UserStatus.Active)
+			{
+				return null;
+			}
+
+			return new PasswordResetTokenResult
+			{
+				Email = user.Email!,
+				Token = await _userManager.GeneratePasswordResetTokenAsync(user)
+			};
+		}
+
+		public async Task<UpdateOperationResult> ResetPasswordAsync(ResetPasswordRequest request)
+		{
+			var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+			if (user is null || user.UserStatus != UserStatus.Active)
+			{
+				return InvalidResetLink();
+			}
+
+			user.UpdatedAt = DateTime.UtcNow;
+			var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+			if (result.Succeeded)
+			{
+				return UpdateOperationResult.Success();
+			}
+
+			if (result.Errors.Any(error => error.Code == nameof(IdentityErrorDescriber.InvalidToken)))
+			{
+				return InvalidResetLink();
+			}
+
+			return UpdateOperationResult.Failed(result.Errors.Select(error =>
+				new UpdateOperationError(nameof(request.NewPassword), error.Description)).ToArray());
+		}
+
 		private async Task<ApplicationUserServiceResult> RegisterAsync(
 			RegisterAccountRequest request,
 			string role,
@@ -453,6 +497,12 @@ namespace FreelanceHub.Application.Services.Implementations
 				: nameof(ChangePasswordRequest.NewPassword);
 
 			return new UpdateOperationError(fieldName, error.Description);
+		}
+
+		private static UpdateOperationResult InvalidResetLink()
+		{
+			return UpdateOperationResult.Failed(
+				new UpdateOperationError(null, "The password reset link is invalid or has expired."));
 		}
 
 

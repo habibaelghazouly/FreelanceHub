@@ -15,6 +15,10 @@ namespace FreelanceHub.Application.Services.Abstractions
 
 		Task<UpdateOperationResult> ChangePasswordAsync(int userId, ChangePasswordRequest request);
 
+		Task<PasswordResetTokenResult?> CreatePasswordResetTokenAsync(string email);
+
+		Task<UpdateOperationResult> ResetPasswordAsync(ResetPasswordRequest request);
+
 		Task<ApplicationUserServiceResult> LoginAsync(LoginRequest request);
 
 		Task LogoutAsync();
