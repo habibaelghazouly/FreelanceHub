@@ -1,6 +1,7 @@
 ﻿using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Domain.Models;
+using Microsoft.AspNetCore.Builder;
 
 namespace FreelanceHub.Application.Services.Abstractions
 {
@@ -17,5 +18,7 @@ namespace FreelanceHub.Application.Services.Abstractions
         Task<ApplicationActionResult> UpdateApplicationStatusAsync(UpdateApplicationStatusRequest request, CancellationToken cancellationToken = default);
 
         Task<List<FreelanceHub.Domain.Models.Application>> GetApplicationsForJobAsync(int jobId, int clientUserId, CancellationToken cancellationToken = default);
+
+        Task<FreelanceHub.Domain.Models.Application?> GetApplicationByIdAsync(int applicationId, int currentUserId, CancellationToken cancellationToken = default);
     }
 }

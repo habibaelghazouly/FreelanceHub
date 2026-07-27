@@ -242,6 +242,14 @@ namespace FreelanceHub.Application.Services.Implementations
                 // If status is Accepted, create the Contract record
                 if (request.ApplicationStatus == ApplicationStatus.Accepted)
                 {
+
+                    // Close the Job
+                    if (application.Job != null)
+                    {
+                        application.Job.JobStatus = JobStatus.InProgress; 
+                        application.Job.UpdatedAt = DateTime.UtcNow;
+                    }
+
                     var contract = new Contract
                     {
                         JobId = application.JobId,
@@ -320,6 +328,28 @@ namespace FreelanceHub.Application.Services.Implementations
             {
                 await _fileUploadService.DeleteAsync(uploadedFile.StorageKey);
             }
+        }
+
+        public async Task<FreelanceHub.Domain.Models.Application?> GetApplicationByIdAsync(int applicationId, int currentUserId, CancellationToken cancellationToken = default)
+        {
+            // 1. Fetch application along with its related Job, Freelancer, and Attachments
+            var application = await _applicationRepository.GetByIdWithDetailsAsync(applicationId, cancellationToken);
+
+            if (application == null)
+            {
+                return null;
+            }
+
+            // 2. Determine authorization: User must be either the Job Owner (Client) or Proposal Owner (Freelancer)
+            bool isJobOwner = application.Job != null && application.Job.ClientUserId == currentUserId;
+            bool isProposalOwner = application.FreelancerUserId == currentUserId;
+
+            if (!isJobOwner && !isProposalOwner)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to view this application.");
+            }
+
+            return application;
         }
     }
 }

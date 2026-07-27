@@ -21,7 +21,6 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
                 .AsNoTracking()
                 .SingleOrDefaultAsync(job =>
                     job.JobId == jobId
-                    && job.JobStatus == JobStatus.Open
                     && !job.IsDeleted, cancellationToken);
         }
 
@@ -70,6 +69,7 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
                     application.ApplicationId == applicationId
                     && application.Job.ClientUserId == clientUserId, cancellationToken);
         }
+
         public async Task<List<Application>> GetApplicationsByJobIdAsync(int jobId, CancellationToken cancellationToken = default)
         {
             return await _dbContext.Applications
@@ -77,6 +77,17 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
                 .Where(a => a.JobId == jobId)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync(cancellationToken);
+        }
+
+        public async Task<Application?> GetByIdWithDetailsAsync(int applicationId, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Applications
+                .Include(a => a.Job)
+                .Include(a => a.FreelancerUser)
+                .Include(a => a.ApplicationAttachments)
+                .ThenInclude(aa => aa.Attachment)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.ApplicationId == applicationId, cancellationToken);
         }
     }
 }
