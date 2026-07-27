@@ -187,7 +187,7 @@ namespace FreelanceHub.Web.Controllers
         [HttpPost]
         [Authorize(Roles = "Client")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStatus(int applicationId, ApplicationStatus applicationStatus)
+        public async Task<IActionResult> UpdateStatus(int applicationId, int jobId, ApplicationStatus applicationStatus)
         {
             if (!TryGetCurrentUserId(out var clientUserId))
             {
@@ -210,7 +210,7 @@ namespace FreelanceHub.Web.Controllers
                 TempData["ErrorMessage"] = string.Join(" ", result.Errors);
             }
 
-            return RedirectToAction(nameof(SubmittedApplications), new { jobId = int.Parse(result.Errors[0]) });
+            return RedirectToAction(nameof(SubmittedApplications), new { jobId = jobId });
         }
 
         private bool TryGetCurrentUserId(out int userId)
@@ -218,5 +218,78 @@ namespace FreelanceHub.Web.Controllers
             var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(claimValue, out userId);
         }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Details(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest();
+            }
+
+            if (!TryGetCurrentUserId(out var currentUserId))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var application = await _applicationManagementService.GetApplicationByIdAsync(id, currentUserId, HttpContext.RequestAborted);
+                if (application == null)
+                {
+                    return NotFound();
+                }
+
+                var isClient = User.IsInRole("Client");
+
+                var viewModel = new ApplicationDetailsViewModel
+                {
+                    ApplicationId = application.ApplicationId,
+                    JobId = application.JobId,
+                    JobTitle = application.Job?.Title,
+                    FreelancerUserId = application.FreelancerUserId,
+                    FreelancerName = application.FreelancerUser?.UserName ?? "Freelancer",
+                    ProposedAmount = application.ProposedAmount,
+                    TimelineDays = application.TimelineDays,
+                    CoverLetter = application.CoverLetter,
+                    SubmittedAt = application.CreatedAt,
+                    ApplicationStatus = application.ApplicationStatus,
+                    IsClient = isClient,
+
+                    Attachments = application.ApplicationAttachments?.Select(item =>
+                    {
+                        var fileName = item.Attachment?.OriginalFileName ?? "Attachment";
+
+                        // Make sure we access the full relative path or append the stored file name
+                        var rawPath = item.Attachment?.FileUrl
+                                   ?? $"/uploads/application-portfolios/{item.Attachment?.StoredFileName}";
+
+                        // Ensure leading slash
+                        if (!string.IsNullOrEmpty(rawPath) && !rawPath.StartsWith("/"))
+                        {
+                            rawPath = "/" + rawPath;
+                        }
+
+                        return new ApplicationAttachmentViewModel
+                        {
+                            AttachmentId = item.AttachmentId,
+                            FileName = fileName,
+                            FilePath = rawPath,
+                            FileExtension = item.Attachment?.ContentType
+                                             ?? Path.GetExtension(fileName)
+                        };
+                    }).ToList() ?? new List<ApplicationAttachmentViewModel>()
+                };
+
+                return View(viewModel);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
     }
-}
+    }
+ 
+
