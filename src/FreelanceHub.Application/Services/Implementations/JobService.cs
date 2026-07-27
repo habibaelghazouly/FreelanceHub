@@ -3,28 +3,33 @@ using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
-using FreelanceHub.Infrastructure.DataBase;
-using Microsoft.EntityFrameworkCore;
+using FreelanceHub.Infrastructure.Repositories.Abstractions;
 
 namespace FreelanceHub.Application.Services.Implementations
 {
     public class JobService : IJobService
     {
 
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IJobRepository _jobRepository;
+
+        private readonly IAttachmentRepository _attachmentRepository;
+
+        private readonly ILookupRepository _lookupRepository;
         private readonly IFileUploadService _fileUploadService;
 
-        public JobService(ApplicationDbContext dbContext, IFileUploadService fileUploadService)
+        public JobService(IJobRepository jobRepository, IAttachmentRepository attachmentRepository, ILookupRepository lookupRepository, IFileUploadService fileUploadService)
         {
-            _dbContext = dbContext;
+            _jobRepository = jobRepository;
+            _attachmentRepository = attachmentRepository;
+            _lookupRepository = lookupRepository;
             _fileUploadService = fileUploadService;
         }
 
         public async Task<CreateJobResult> CreateJobAsync(
-     CreateJobRequest request,
-     CancellationToken cancellationToken = default)
+    CreateJobRequest request,
+    CancellationToken cancellationToken = default)
         {
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _jobRepository.BeginTransactionAsync(cancellationToken);
 
             try
             {
@@ -37,17 +42,16 @@ namespace FreelanceHub.Application.Services.Implementations
                     ClientUserId = request.ClientId
                 };
 
-                _dbContext.Jobs.Add(job);
+                await _jobRepository.CreateJobAsync(job, cancellationToken);
 
-                // Save once to generate JobId
-                await _dbContext.SaveChangesAsync(cancellationToken);
-
-                AssignJobAttributes(request, job);
+                await AssignJobAttributes(request, job, cancellationToken);
 
                 await UploadJobFiles(request, job, cancellationToken);
-                await _dbContext.SaveChangesAsync(cancellationToken);
 
-                await transaction.CommitAsync(cancellationToken);
+                await _jobRepository.SaveChangesAsync(cancellationToken);
+
+                await _jobRepository.CommitTransactionAsync(cancellationToken);
+
                 return new CreateJobResult
                 {
                     Succeeded = true,
@@ -56,7 +60,7 @@ namespace FreelanceHub.Application.Services.Implementations
             }
             catch
             {
-                await transaction.RollbackAsync(cancellationToken);
+                await _jobRepository.RollbackTransactionAsync(cancellationToken);
                 throw;
             }
         }
@@ -75,96 +79,100 @@ namespace FreelanceHub.Application.Services.Implementations
                     ContentType = uploadedFile.ContentType,
                     FileSize = uploadedFile.FileSize
                 };
-                _dbContext.Attachments.Add(attachment);
+                await _attachmentRepository.AddAsync(attachment, cancellationToken);
 
                 var jobAttachment = new JobAttachment
                 {
                     JobId = job.JobId,
                     Attachment = attachment
                 };
-                _dbContext.JobAttachments.Add(jobAttachment);
+                await _jobRepository.AddAttachmentsAsync(new List<JobAttachment> { jobAttachment }, cancellationToken);
 
 
             }
         }
 
-        private static IEnumerable<int> ParseIds(string? ids)
-        {
-            if (string.IsNullOrWhiteSpace(ids))
-                return Enumerable.Empty<int>();
-
-            return ids
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(int.Parse);
-        }
-
-
 
         public async Task<IEnumerable<Job>> GetJobsByClientIdAsync(int clientId, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Jobs
-                .Where(job => job.ClientUserId == clientId)
-                .Include(j => j.JobCategories)
-                    .ThenInclude(jc => jc.Category)
-                .Include(j => j.JobSkills)
-                    .ThenInclude(js => js.Skill)
-                .Include(j => j.JobTags)
-                    .ThenInclude(jt => jt.Tag)
-                .Include(j => j.Applications)
-                    .ThenInclude(a => a.FreelancerUser)
-                .ToListAsync(cancellationToken);
+            return await _jobRepository.GetJobsByClientIdAsync(clientId, cancellationToken);
         }
 
         public async Task<IEnumerable<Job>> GetAllJOpeningJobsAsync(CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Jobs.Where(job => job.JobStatus == JobStatus.Open)
-                .Include(j => j.JobCategories)
-                    .ThenInclude(jc => jc.Category)
-                .Include(j => j.JobSkills)
-                    .ThenInclude(js => js.Skill)
-                .Include(j => j.JobTags)
-                    .ThenInclude(jt => jt.Tag)
-                .ToListAsync(cancellationToken);
+            return await _jobRepository.GetAllOpeningJobsAsync(cancellationToken);
         }
 
-        private void AssignJobAttributes(CreateJobRequest request, Job job)
+        private async Task AssignJobAttributes(CreateJobRequest request, Job job, CancellationToken cancellationToken = default)
         {
-            _dbContext.JobCategories.AddRange(
-                ParseIds(request.CategoryIds)
-                    .Select(id => new JobCategory
-                    {
-                        JobId = job.JobId,
-                        CategoryId = id
-                    }));
+            await _jobRepository.AddJobCategoriesAsync(request.CategoryIds.Select(id => new JobCategory
+            {
+                JobId = job.JobId,
+                CategoryId = id
+            }), cancellationToken);
 
-            _dbContext.JobTags.AddRange(
-                ParseIds(request.TagIds)
-                    .Select(id => new JobTag
-                    {
-                        JobId = job.JobId,
-                        TagId = id
-                    }));
+            await _jobRepository.AddJobTagsAsync(request.TagIds.Select(id => new JobTag
+            {
+                JobId = job.JobId,
+                TagId = id
+            }), cancellationToken);
 
-            _dbContext.JobSkills.AddRange(
-                ParseIds(request.SkillIds)
-                    .Select(id => new JobSkill
-                    {
-                        JobId = job.JobId,
-                        SkillId = id
-                    }));
+            await _jobRepository.AddJobSkillsAsync(request.SkillIds.Select(id => new JobSkill
+            {
+                JobId = job.JobId,
+                SkillId = id
+            }), cancellationToken);
         }
         public async Task<Job?> GetJobByIdAsync(int jobId, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Jobs
-                .Include(j => j.JobCategories)
-                    .ThenInclude(jc => jc.Category)
-                .Include(j => j.JobSkills)
-                    .ThenInclude(js => js.Skill)
-                .Include(j => j.JobTags)
-                    .ThenInclude(jt => jt.Tag)
-                .Include(j => j.JobAttachments)
-                    .ThenInclude(ja => ja.Attachment)
-                .FirstOrDefaultAsync(j => j.JobId == jobId, cancellationToken);
+            return await _jobRepository.GetJobByIdAsync(jobId, cancellationToken);
+        }
+
+        public async Task<CreateJobPageResult> GetCreateJobPageDataAsync(CancellationToken cancellationToken = default)
+        {
+            var categories = await _lookupRepository.GetCategoriesAsync(cancellationToken);
+            var tags = await _lookupRepository.GetTagsAsync(cancellationToken);
+            var skills = await _lookupRepository.GetSkillsAsync(cancellationToken);
+
+            return new CreateJobPageResult
+            {
+                Categories = categories.Select(c => new SelectableItemResult
+                {
+                    Id = c.CategoryId,
+                    Name = c.Name
+                }).ToList(),
+
+                Tags = tags.Select(t => new SelectableItemResult
+                {
+                    Id = t.TagId,
+                    Name = t.Name
+                }).ToList(),
+
+                Skills = skills.Select(s => new SelectableItemResult
+                {
+                    Id = s.SkillId,
+                    Name = s.Name
+                }).ToList()
+            };
+        }
+        
+        public async Task<BrowseJobsResult> BrowseJobsAsync(
+            int? categoryId,
+            int? skillId,
+            decimal? maxBudget,
+            string? sortOrder,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var (jobs, totalCount) = await _jobRepository.BrowseJobsAsync(categoryId, skillId, maxBudget, sortOrder, pageNumber, pageSize, cancellationToken);
+
+            return new BrowseJobsResult
+            {
+                Jobs = jobs,
+                TotalCount = totalCount
+            };
         }
     }
+
 }

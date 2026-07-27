@@ -2,11 +2,10 @@ using System.Security.Claims;
 using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
-using FreelanceHub.Infrastructure.DataBase;
 using FreelanceHub.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FreelanceHub.Web.Controllers
 {
@@ -14,30 +13,25 @@ namespace FreelanceHub.Web.Controllers
     public class JobController : Controller
     {
         private readonly IJobService _jobService;
-        private readonly ApplicationDbContext _dbContext;
 
-        public JobController(IJobService jobService, ApplicationDbContext dbContext)
+
+        public JobController(IJobService jobService)
         {
             _jobService = jobService;
-            _dbContext = dbContext;
+
         }
 
         [HttpGet]
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create()
         {
-            // Load categories, tags, and skills from database
-            var categories = await _dbContext.Categories.ToListAsync();
-            var tags = await _dbContext.Tags.ToListAsync();
-            var skills = await _dbContext.Skills.ToListAsync();
+            var result = await _jobService.GetCreateJobPageDataAsync();
 
-            // Create view model with modal data
-            var viewModel = new CreateJobViewModel();
-            ViewBag.Categories = categories.Select(c => new SelectableItem { Id = c.CategoryId, Name = c.Name }).ToList();
-            ViewBag.Tags = tags.Select(t => new SelectableItem { Id = t.TagId, Name = t.Name }).ToList();
-            ViewBag.Skills = skills.Select(s => new SelectableItem { Id = s.SkillId, Name = s.Name }).ToList();
+            ViewBag.Categories = result.Categories;
+            ViewBag.Tags = result.Tags;
+            ViewBag.Skills = result.Skills;
 
-            return View(viewModel);
+            return View(new CreateJobViewModel());
         }
 
         [HttpPost]
@@ -71,13 +65,10 @@ namespace FreelanceHub.Web.Controllers
             var openedStreams = new List<Stream>();
             var jobFiles = new List<UploadedFileRequest>();
 
-            Console.WriteLine($"Model: Title={model.Title}, Description={model.Description}, Budget={model.Budget}, Deadline={model.Deadline}, ClientId={userId}, CategoryIds={model.CategoryIds}, SkillIds={model.SkillIds}, TagIds={model.TagIds}");
-            Console.WriteLine($"JobFiles Count: {model.JobFiles.Count}");
             try
             {
                 foreach (var jobFile in model.JobFiles.Where(file => file.Length > 0))
                 {
-                    Console.WriteLine($"Processing file: {jobFile.FileName}, Size: {jobFile.Length}, ContentType: {jobFile.ContentType}");
                     var stream = jobFile.OpenReadStream();
                     openedStreams.Add(stream);
                     jobFiles.Add(new UploadedFileRequest(stream, jobFile.FileName, jobFile.ContentType, jobFile.Length));
@@ -85,7 +76,6 @@ namespace FreelanceHub.Web.Controllers
             }
             catch
             {
-                // Handle any exceptions that may occur while opening the streams
                 foreach (var stream in openedStreams)
                 {
                     stream.Dispose();
@@ -102,7 +92,7 @@ namespace FreelanceHub.Web.Controllers
                 CategoryIds = model.CategoryIds ?? string.Empty,
                 SkillIds = model.SkillIds ?? string.Empty,
                 TagIds = model.TagIds ?? string.Empty,
-                JobFiles = jobFiles
+                JobFiles = jobFiles ?? new List<UploadedFileRequest>()
             };
         }
 
@@ -116,12 +106,6 @@ namespace FreelanceHub.Web.Controllers
             return View(jobs);
         }
 
-        public async Task<IActionResult> Index()
-        {
-            var jobs = await _jobService.GetAllJOpeningJobsAsync();
-
-            return View(jobs);
-        }
 
         public async Task<IActionResult> DetailJob(int id)
         {
@@ -133,6 +117,38 @@ namespace FreelanceHub.Web.Controllers
             }
 
             return View(job);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Browse(JobBrowseViewModel model)
+        {
+            var result = await _jobService.BrowseJobsAsync(
+                model.CategoryId,
+                model.SkillId,
+                model.MaxBudget,
+                model.SortOrder,
+                model.PageNumber,
+                model.PageSize,
+                HttpContext.RequestAborted);
+            var data = await _jobService.GetCreateJobPageDataAsync();
+            return View(Mapper(result, model,data));
+        }
+
+        private JobBrowseViewModel Mapper(BrowseJobsResult result, JobBrowseViewModel model,CreateJobPageResult data)
+        {
+            return new JobBrowseViewModel
+            {
+                SortOrder = model.SortOrder,
+                CategoryId = model.CategoryId,
+                SkillId = model.SkillId,
+                MaxBudget = model.MaxBudget,
+                PageNumber = model.PageNumber,
+                PageSize = model.PageSize,
+                TotalCount = result.TotalCount,
+                Jobs = result.Jobs,
+                Categories = data.Categories.Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToList(),
+                Skills = data.Skills.Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToList()
+            };
         }
     }
 }

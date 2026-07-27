@@ -58,7 +58,6 @@ namespace FreelanceHub.Web
 
 			builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
 			builder.Services.AddScoped<IFileUploadService, FileUploadService>();
-			builder.Services.AddScoped<IJobBrowseService, JobBrowseService>();
 			builder.Services.AddScoped<IProfileService, ProfileService>();
 			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 			builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
@@ -72,9 +71,10 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IChatService, ChatService>();
 			builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 			builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
-
+			builder.Services.AddScoped<IJobRepository, JobRepository>();
             builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
             builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+			builder.Services.AddScoped<ILookupRepository, LookupRepository>();
 
             var app = builder.Build();
 
