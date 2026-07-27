@@ -1,9 +1,8 @@
 using FreelanceHub.Domain.Enums;
-using FreelanceHub.Infrastructure.DataBase;
+using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using FreelanceHub.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FreelanceHub.Web.Controllers
 {
@@ -12,52 +11,25 @@ namespace FreelanceHub.Web.Controllers
     {
         private const string FreelancerRole = "Freelancer";
         private const string ClientRole = "Client";
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IAdminRepository _adminRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AdminController(ApplicationDbContext dbContext)
+        public AdminController(IAdminRepository adminRepository, IUnitOfWork unitOfWork)
         {
-            _dbContext = dbContext;
+            _adminRepository = adminRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IActionResult> Index()
         {
-            var roleAssignments = _dbContext.UserRoles.Join(
-                _dbContext.Roles,
-                userRole => userRole.RoleId,
-                role => role.Id,
-                (userRole, role) => new { userRole.UserId, role.Name });
+            var freelancerUsers = await _adminRepository.ListUsersInRoleAsync(FreelancerRole);
+            var clientUsers = await _adminRepository.ListUsersInRoleAsync(ClientRole);
+            var jobEntities = await _adminRepository.ListJobsAsync();
+            var contractEntities = await _adminRepository.ListContractsAsync();
 
-            var freelancers = await roleAssignments
-                .Where(item => item.Name == FreelancerRole)
-                .Join(_dbContext.Users, item => item.UserId, user => user.Id, (item, user) => new AdminUserViewModel
-                {
-                    UserId = user.Id,
-                    Name = (user.FirstName + " " + user.LastName).Trim(),
-                    Email = user.Email ?? string.Empty,
-                    Status = user.UserStatus.ToString()
-                })
-                .OrderBy(user => user.Name)
-                .ToListAsync();
-
-            var clients = await roleAssignments
-                .Where(item => item.Name == ClientRole)
-                .Join(_dbContext.Users, item => item.UserId, user => user.Id, (item, user) => new AdminUserViewModel
-                {
-                    UserId = user.Id,
-                    Name = (user.FirstName + " " + user.LastName).Trim(),
-                    Email = user.Email ?? string.Empty,
-                    Status = user.UserStatus.ToString()
-                })
-                .OrderBy(user => user.Name)
-                .ToListAsync();
-
-            var jobs = await _dbContext.Jobs
-                .AsNoTracking()
-                .Include(job => job.ClientUser)
-                .Include(job => job.Applications)
-                .Include(job => job.Contract)
-                .OrderByDescending(job => job.CreatedAt)
-                .Select(job => new AdminJobViewModel
+            var freelancers = freelancerUsers.Select(user => new AdminUserViewModel { UserId = user.Id, Name = (user.FirstName + " " + user.LastName).Trim(), Email = user.Email ?? string.Empty, Status = user.UserStatus.ToString() }).ToList();
+            var clients = clientUsers.Select(user => new AdminUserViewModel { UserId = user.Id, Name = (user.FirstName + " " + user.LastName).Trim(), Email = user.Email ?? string.Empty, Status = user.UserStatus.ToString() }).ToList();
+            var jobs = jobEntities.Select(job => new AdminJobViewModel
                 {
                     JobId = job.JobId,
                     Title = job.Title,
@@ -68,17 +40,9 @@ namespace FreelanceHub.Web.Controllers
                     CanRevoke = !job.IsDeleted
                         && job.Contract == null
                         && !job.Applications.Any(application => application.ApplicationStatus == ApplicationStatus.Accepted)
-                })
-                .ToListAsync();
+                }).ToList();
 
-            var contracts = await _dbContext.Contracts
-                .AsNoTracking()
-                .Include(contract => contract.Job)
-                    .ThenInclude(job => job.ClientUser)
-                .Include(contract => contract.AcceptedApplication)
-                    .ThenInclude(application => application.FreelancerUser)
-                .OrderByDescending(contract => contract.StartDate)
-                .Select(contract => new AdminContractViewModel
+            var contracts = contractEntities.Select(contract => new AdminContractViewModel
                 {
                     ContractId = contract.ContractId,
                     JobTitle = contract.Job.Title,
@@ -86,8 +50,7 @@ namespace FreelanceHub.Web.Controllers
                     FreelancerName = (contract.AcceptedApplication.FreelancerUser.FirstName + " " + contract.AcceptedApplication.FreelancerUser.LastName).Trim(),
                     Amount = contract.AgreedAmount,
                     Status = contract.ContractStatus.ToString()
-                })
-                .ToListAsync();
+                }).ToList();
 
             return View(new AdminDashboardViewModel
             {
@@ -102,14 +65,28 @@ namespace FreelanceHub.Web.Controllers
             });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Contracts()
+        {
+            var contracts = await _adminRepository.ListContractsAsync(HttpContext.RequestAborted);
+
+            return View(contracts.Select(contract => new AdminContractViewModel
+            {
+                ContractId = contract.ContractId,
+                JobTitle = contract.Job.Title,
+                ClientName = (contract.Job.ClientUser.FirstName + " " + contract.Job.ClientUser.LastName).Trim(),
+                FreelancerName = (contract.AcceptedApplication.FreelancerUser.FirstName + " " + contract.AcceptedApplication.FreelancerUser.LastName).Trim(),
+                Amount = contract.AgreedAmount,
+                Status = contract.ContractStatus.ToString()
+            }).ToList());
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RevokeJob(int id)
         {
-            var job = await _dbContext.Jobs
-                .Include(item => item.Applications)
-                .Include(item => item.Contract)
-                .SingleOrDefaultAsync(item => item.JobId == id);
+            if (id <= 0) return BadRequest();
+            var job = await _adminRepository.GetJobForRevocationAsync(id);
 
             if (job is null)
             {
@@ -127,7 +104,7 @@ namespace FreelanceHub.Web.Controllers
             job.DeletedAt = DateTime.UtcNow;
             job.JobStatus = JobStatus.Cancelled;
             job.UpdatedAt = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             TempData["AdminSuccess"] = "The job has been revoked and is no longer available to freelancers.";
             return RedirectToAction(nameof(Index));

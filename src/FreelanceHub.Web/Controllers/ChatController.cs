@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FreelanceHub.Web.Controllers
 {
-	[Authorize]
+	[Authorize(Roles = "Client,Freelancer")]
 	[Route("messages")]
 	public class ChatController : Controller
 	{

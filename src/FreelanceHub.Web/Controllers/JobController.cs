@@ -2,11 +2,11 @@ using System.Security.Claims;
 using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
-using FreelanceHub.Infrastructure.DataBase;
+using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using FreelanceHub.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FreelanceHub.Web.Controllers
 {
@@ -14,30 +14,20 @@ namespace FreelanceHub.Web.Controllers
     public class JobController : Controller
     {
         private readonly IJobService _jobService;
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IJobRepository _jobRepository;
 
-        public JobController(IJobService jobService, ApplicationDbContext dbContext)
+        public JobController(IJobService jobService, IJobRepository jobRepository)
         {
             _jobService = jobService;
-            _dbContext = dbContext;
+            _jobRepository = jobRepository;
         }
 
         [HttpGet]
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create()
         {
-            // Load categories, tags, and skills from database
-            var categories = await _dbContext.Categories.ToListAsync();
-            var tags = await _dbContext.Tags.ToListAsync();
-            var skills = await _dbContext.Skills.ToListAsync();
-
-            // Create view model with modal data
-            var viewModel = new CreateJobViewModel();
-            ViewBag.Categories = categories.Select(c => new SelectableItem { Id = c.CategoryId, Name = c.Name }).ToList();
-            ViewBag.Tags = tags.Select(t => new SelectableItem { Id = t.TagId, Name = t.Name }).ToList();
-            ViewBag.Skills = skills.Select(s => new SelectableItem { Id = s.SkillId, Name = s.Name }).ToList();
-
-            return View(viewModel);
+            await PopulateCreateOptionsAsync();
+            return View(new CreateJobViewModel());
         }
 
         [HttpPost]
@@ -45,23 +35,32 @@ namespace FreelanceHub.Web.Controllers
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create(CreateJobViewModel model)
         {
-            var userId = ((ClaimsIdentity)User.Identity).FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!ModelState.IsValid)
             {
+                await PopulateCreateOptionsAsync();
                 return View(model);
             }
+            if (!int.TryParse(userId, out var clientId))
+            {
+                return Forbid();
+            }
+
+            var request = ToCreateJobRequest(model, clientId);
+            CreateJobResult result;
             try
             {
-                CreateJobRequest request = ToCreateJobRequest(model, int.Parse(userId));
-                Console.WriteLine($"Request: Title={request.Title}, Description={request.Description}, Budget={request.Budget}, Deadline={request.Deadline}, ClientId={request.ClientId}, CategoryIds={request.CategoryIds}, SkillIds={request.SkillIds}, TagIds={request.TagIds}");
-                Console.WriteLine($"JobFiles Count: {request.JobFiles.Count}");
-                var result = await _jobService.CreateJobAsync(request, HttpContext.RequestAborted);
-
+                result = await _jobService.CreateJobAsync(request, HttpContext.RequestAborted);
             }
-            catch (Exception)
+            finally
             {
-
-                throw;
+                foreach (var file in request.JobFiles) file.Content.Dispose();
+            }
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
+                await PopulateCreateOptionsAsync();
+                return View(model);
             }
 
             return RedirectToAction("MyJobs");
@@ -71,13 +70,10 @@ namespace FreelanceHub.Web.Controllers
             var openedStreams = new List<Stream>();
             var jobFiles = new List<UploadedFileRequest>();
 
-            Console.WriteLine($"Model: Title={model.Title}, Description={model.Description}, Budget={model.Budget}, Deadline={model.Deadline}, ClientId={userId}, CategoryIds={model.CategoryIds}, SkillIds={model.SkillIds}, TagIds={model.TagIds}");
-            Console.WriteLine($"JobFiles Count: {model.JobFiles.Count}");
             try
             {
-                foreach (var jobFile in model.JobFiles.Where(file => file.Length > 0))
+                foreach (var jobFile in (model.JobFiles ?? []).Where(file => file.Length > 0))
                 {
-                    Console.WriteLine($"Processing file: {jobFile.FileName}, Size: {jobFile.Length}, ContentType: {jobFile.ContentType}");
                     var stream = jobFile.OpenReadStream();
                     openedStreams.Add(stream);
                     jobFiles.Add(new UploadedFileRequest(stream, jobFile.FileName, jobFile.ContentType, jobFile.Length));
@@ -133,6 +129,30 @@ namespace FreelanceHub.Web.Controllers
             }
 
             return View(job);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Freelancer")]
+        public async Task<IActionResult> Browse(JobBrowseViewModel model)
+        {
+            if (model.MaxBudget is < 0) ModelState.AddModelError(nameof(model.MaxBudget), "Maximum budget cannot be negative.");
+            if (model.PageNumber < 1) model.PageNumber = 1;
+            model.PageSize = Math.Clamp(model.PageSize, 1, 100);
+            if (model.SortOrder is not ("date" or "budget")) model.SortOrder = "date";
+
+            var result = await _jobRepository.BrowseOpenAsync(model.CategoryId, model.MaxBudget, model.SkillId, model.SortOrder, model.PageNumber, model.PageSize, HttpContext.RequestAborted);
+            model.TotalCount = result.TotalCount;
+            model.Jobs = result.Jobs;
+            model.Categories = (await _jobRepository.ListCategoriesAsync(HttpContext.RequestAborted)).Select(category => new SelectListItem(category.Name, category.CategoryId.ToString())).ToList();
+            model.Skills = (await _jobRepository.ListSkillsAsync(HttpContext.RequestAborted)).Select(skill => new SelectListItem(skill.Name, skill.SkillId.ToString())).ToList();
+            return View("~/Views/Jobs/Browse.cshtml", model);
+        }
+
+        private async Task PopulateCreateOptionsAsync()
+        {
+            ViewBag.Categories = (await _jobRepository.ListCategoriesAsync(HttpContext.RequestAborted)).Select(category => new SelectableItem { Id = category.CategoryId, Name = category.Name }).ToList();
+            ViewBag.Tags = (await _jobRepository.ListTagsAsync(HttpContext.RequestAborted)).Select(tag => new SelectableItem { Id = tag.TagId, Name = tag.Name }).ToList();
+            ViewBag.Skills = (await _jobRepository.ListSkillsAsync(HttpContext.RequestAborted)).Select(skill => new SelectableItem { Id = skill.SkillId, Name = skill.Name }).ToList();
         }
     }
 }
