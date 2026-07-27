@@ -6,7 +6,9 @@ namespace FreelanceHub.Domain.Enums
             Open = 40,
             InProgress = 41,
             Completed = 42,
-            Cancelled = 43
+            Cancelled = 43,
+
+            Overdue = 44,
         }
     
 }

@@ -62,5 +62,17 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 				.OrderByDescending(contract => contract.StartDate)
 				.ToListAsync();
 		}
+
+		public async Task<IEnumerable<Contract>> GetExpiredContractsAsync()
+		{
+			return await _dbContext.Contracts
+				.Where(c => c.ExpectedCompletionDate < DateTime.UtcNow && c.ContractStatus != Domain.Enums.ContractStatus.Completed && c.ContractStatus != Domain.Enums.ContractStatus.Overdue)
+				.ToListAsync();
+		}
+
+		public async Task UpdateContractAsync(Contract contract)
+		{
+			_dbContext.Contracts.Update(contract);
+		}
 	}
 }

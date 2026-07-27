@@ -7,8 +7,10 @@ using FreelanceHub.Infrastructure.Repositories.Implementations;
 using FreelanceHub.Infrastructure.Storage;
 using FreelanceHub.Web.Hubs;
 using FreelanceHub.Web.Services;
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace FreelanceHub.Web
 {
@@ -72,11 +74,35 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 			builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 			builder.Services.AddScoped<IJobRepository, JobRepository>();
-            builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
-            builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+			builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
+			builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
 			builder.Services.AddScoped<ILookupRepository, LookupRepository>();
+			builder.Services.AddScoped<IDailyBackgroundService, DailyBackgroundService>();
 
-            var app = builder.Build();
+			builder.Services.AddHangfire(config =>
+			config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+		  	.UseSimpleAssemblyNameTypeSerializer()
+		  	.UseRecommendedSerializerSettings()
+		  	.UseSqlServerStorage(
+			  builder.Configuration.GetConnectionString("DefaultConnection")));
+
+			builder.Services.AddHangfireServer();
+
+
+			var app = builder.Build();
+
+			app.UseHangfireDashboard();
+
+			using (var scope = app.Services.CreateScope())
+			{
+				var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+				recurringJobManager.AddOrUpdate<IDailyBackgroundService>(
+					"DailyBackgroundService",
+					service => service.ExecuteDailyTasksAsync(),
+					Cron.Daily(1, 50),
+					TimeZoneInfo.Local);
+			}
 
 			SeedAdminAsync(app.Services, builder.Configuration).GetAwaiter().GetResult();
 

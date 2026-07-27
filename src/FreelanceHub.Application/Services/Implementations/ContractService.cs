@@ -279,6 +279,7 @@ namespace FreelanceHub.Application.Services.Implementations
 				ContractStatus.Draft => "Draft",
 				ContractStatus.Completed => "Completed",
 				ContractStatus.Terminated => "Terminated",
+				ContractStatus.Overdue => "Overdue",
 				_ => "Unknown"
 			};
 		}

@@ -167,6 +167,19 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
 
             return (jobs, totalCount);
         }
+
+        public async Task<IEnumerable<Job>> GetExpiredJobsAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Jobs
+                .Where(j => j.Deadline < DateTime.UtcNow && j.JobStatus == JobStatus.Open)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task UpdateJobAsync(Job job, CancellationToken cancellationToken = default)
+        {
+            _dbContext.Jobs.Update(job);
+        }
+
         
     }
 }

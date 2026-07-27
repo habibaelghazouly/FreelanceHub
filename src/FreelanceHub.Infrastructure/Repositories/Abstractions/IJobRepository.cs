@@ -48,5 +48,10 @@ namespace FreelanceHub.Infrastructure.Repositories.Abstractions
             int pageSize,
             CancellationToken cancellationToken = default);
 
+        Task<IEnumerable<Job>> GetExpiredJobsAsync(CancellationToken cancellationToken = default);
+
+        Task UpdateJobAsync(Job job, CancellationToken cancellationToken = default);
+
+
     }
 }

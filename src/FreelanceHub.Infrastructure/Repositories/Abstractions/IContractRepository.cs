@@ -11,5 +11,11 @@ namespace FreelanceHub.Infrastructure.Repositories.Abstractions
 		Task<IReadOnlyList<Contract>> ListContractsForUserAsync(int userId);
 
 		Task AddReviewAsync(Review review);
+
+		Task<IEnumerable<Contract>> GetExpiredContractsAsync();
+
+		Task UpdateContractAsync(Contract contract);
+
+
 	}
 }
