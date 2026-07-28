@@ -15,14 +15,5 @@ namespace FreelanceHub.Application.Services.Abstractions
 
         Task<IEnumerable<Job>> GetJobsByClientIdAsync(int clientId, CancellationToken cancellationToken = default);
 
-        Task<CreateJobPageResult> GetCreateJobPageDataAsync(CancellationToken cancellationToken = default);
-        Task<BrowseJobsResult> BrowseJobsAsync(
-    int? categoryId,
-    int? skillId,
-    decimal? maxBudget,
-    string? sortOrder,
-    int pageNumber,
-    int pageSize,
-    CancellationToken cancellationToken = default);
     }
 }
