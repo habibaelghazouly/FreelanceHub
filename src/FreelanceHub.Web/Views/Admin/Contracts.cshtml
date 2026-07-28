@@ -1,0 +1,31 @@
+@model IReadOnlyList<FreelanceHub.Web.ViewModels.AdminContractViewModel>
+
+@{
+    ViewData["Title"] = "All Contracts";
+}
+
+<div class="py-4">
+    <div class="mb-4">
+        <h1 class="h2 mb-1">All Contracts</h1>
+        <p class="text-muted mb-0">Contracts established between all clients and freelancers.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No established contracts found.</div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Contract</th><th>Job</th><th>Client</th><th>Freelancer</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody>
+                @foreach (var contract in Model)
+                {
+                    <tr><td>#@contract.ContractId</td><td>@contract.JobTitle</td><td>@contract.ClientName</td><td>@contract.FreelancerName</td><td>@contract.Amount.ToString("C")</td><td>@contract.Status</td></tr>
+                }
+                </tbody>
+            </table>
+        </div></div></div>
+    }
+</div>

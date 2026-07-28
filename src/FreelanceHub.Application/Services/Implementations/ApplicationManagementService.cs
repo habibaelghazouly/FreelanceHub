@@ -263,6 +263,8 @@ namespace FreelanceHub.Application.Services.Implementations
                     };
 
                     await _dbContext.Contracts.AddAsync(contract, cancellationToken);
+					application.Job.JobStatus = JobStatus.InProgress;
+					application.Job.UpdatedAt = DateTime.UtcNow;
                    
                 }
 
