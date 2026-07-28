@@ -138,7 +138,7 @@ namespace FreelanceHub.Web.Controllers
             model.Jobs = result.Jobs;
             model.Categories = (await _jobRepository.ListCategoriesAsync(HttpContext.RequestAborted)).Select(category => new SelectListItem(category.Name, category.CategoryId.ToString())).ToList();
             model.Skills = (await _jobRepository.ListSkillsAsync(HttpContext.RequestAborted)).Select(skill => new SelectListItem(skill.Name, skill.SkillId.ToString())).ToList();
-            return View("~/Views/Jobs/Browse.cshtml", model);
+            return View(model);
         }
 
         private async Task PopulateCreateOptionsAsync()
