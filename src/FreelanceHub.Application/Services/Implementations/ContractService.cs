@@ -60,69 +60,6 @@ namespace FreelanceHub.Application.Services.Implementations
 			};
 		}
 
-		public async Task<UpdateOperationResult> CompleteAsync(int contractId, int currentUserId)
-		{
-			var contract = await _contractRepository.GetForParticipantAsync(contractId, currentUserId);
-			if (contract is null)
-			{
-				return UpdateOperationResult.Missing();
-			}
-
-			if (contract.AcceptedApplication.FreelancerUserId != currentUserId)
-			{
-				return UpdateOperationResult.Failed(
-					new UpdateOperationError(null, "Only the contract freelancer can mark it complete."));
-			}
-
-			if (contract.ContractStatus is not (ContractStatus.Draft or ContractStatus.Accepted))
-			{
-				return UpdateOperationResult.Failed(
-					new UpdateOperationError(null, "Only an active contract can be completed."));
-			}
-
-			contract.ContractStatus = ContractStatus.Completed;
-			contract.ActualCompletionDate = DateTime.UtcNow;
-
-			try
-			{
-				await _unitOfWork.SaveChangesAsync();
-				return UpdateOperationResult.Success();
-			}
-			catch (DbUpdateException)
-			{
-				return UpdateOperationResult.Failed(
-					new UpdateOperationError(null, "Unable to complete this contract. Please try again."));
-			}
-		}
-
-		public async Task<UpdateOperationResult> TerminateAsync(int contractId, int currentUserId)
-		{
-			var contract = await _contractRepository.GetForParticipantAsync(contractId, currentUserId);
-			if (contract is null)
-			{
-				return UpdateOperationResult.Missing();
-			}
-
-			if (contract.ContractStatus is not (ContractStatus.Draft or ContractStatus.Accepted))
-			{
-				return UpdateOperationResult.Failed(
-					new UpdateOperationError(null, "Only an active contract can be terminated."));
-			}
-
-			contract.ContractStatus = ContractStatus.Terminated;
-
-			try
-			{
-				await _unitOfWork.SaveChangesAsync();
-				return UpdateOperationResult.Success();
-			}
-			catch (DbUpdateException)
-			{
-				return UpdateOperationResult.Failed(
-					new UpdateOperationError(null, "Unable to terminate this contract. Please try again."));
-			}
-		}
-
 		public async Task<UpdateOperationResult> SubmitReviewAsync(
 			int contractId,
 			int currentUserId,
@@ -268,6 +205,55 @@ namespace FreelanceHub.Application.Services.Implementations
 				ClientUserId = contract.Job.ClientUserId,
 				FreelancerUserId = contract.AcceptedApplication.FreelancerUserId
 			}).ToArray();
+		}
+
+		public async Task<UpdateOperationResult> CompleteAsync(int contractId, int freelancerUserId)
+		{
+			var contract = await _contractRepository.GetForParticipantAsync(contractId, freelancerUserId);
+			if (contract is null)
+			{
+				return UpdateOperationResult.Missing();
+			}
+
+			if (contract.AcceptedApplication.FreelancerUserId != freelancerUserId)
+			{
+				return UpdateOperationResult.Failed(new UpdateOperationError(null, "Only the assigned freelancer can complete this contract."));
+			}
+
+			if (contract.ContractStatus is not (ContractStatus.Draft or ContractStatus.Accepted))
+			{
+				return UpdateOperationResult.Failed(new UpdateOperationError(null, "Only active contracts can be completed."));
+			}
+
+			contract.ContractStatus = ContractStatus.Completed;
+			contract.ActualCompletionDate = DateTime.UtcNow;
+			contract.UpdatedAt = DateTime.UtcNow;
+			contract.Job.JobStatus = JobStatus.Completed;
+			contract.Job.UpdatedAt = DateTime.UtcNow;
+			await _unitOfWork.SaveChangesAsync();
+			return UpdateOperationResult.Success();
+		}
+
+		public async Task<UpdateOperationResult> TerminateAsync(int contractId, int userId)
+		{
+			var contract = await _contractRepository.GetForParticipantAsync(contractId, userId);
+			if (contract is null)
+			{
+				return UpdateOperationResult.Missing();
+			}
+
+			if (contract.ContractStatus is not (ContractStatus.Draft or ContractStatus.Accepted))
+			{
+				return UpdateOperationResult.Failed(new UpdateOperationError(null, "Only active contracts can be terminated."));
+			}
+
+			contract.ContractStatus = ContractStatus.Terminated;
+			contract.ActualCompletionDate = DateTime.UtcNow;
+			contract.UpdatedAt = DateTime.UtcNow;
+			contract.Job.JobStatus = JobStatus.Cancelled;
+			contract.Job.UpdatedAt = DateTime.UtcNow;
+			await _unitOfWork.SaveChangesAsync();
+			return UpdateOperationResult.Success();
 		}
 
 		public string GetContractStatusDisplayName(ContractStatus status)

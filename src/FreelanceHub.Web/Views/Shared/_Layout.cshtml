@@ -32,9 +32,13 @@
                         @if (User.IsInRole("Freelancer"))
                         {
                             <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Jobs" asp-action="Browse">Jobs</a></li>
+                            <a class="nav-link text-dark" asp-controller="Job" asp-action="Browse">Jobs</a></li>
                             <li><a class="nav-link text-dark" asp-controller="Applications" asp-action="MyApplications">My
                                 Applications</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Contract"
+                                asp-action="Index">Contracts</a>
                             </li>
                         }
                         @if (User.IsInRole("Client"))
@@ -42,19 +46,22 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Job" asp-action="MyJobs">My Jobs</a>
                             </li>
-
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Contract"
+                                asp-action="Index">Contracts</a>
+                            </li>
                         }
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Admin" asp-action="Contracts">Contracts</a>
+                            </li>
                         }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Contract"
-                               asp-action="Index">Contracts</a>
-                        </li>
-                        @if (User.Identity?.IsAuthenticated == true)
+
+                        @if (User.IsInRole("Client") || User.IsInRole("Freelancer"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Chat" asp-action="Inbox">Messages</a>
