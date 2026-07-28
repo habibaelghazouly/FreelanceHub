@@ -30,39 +30,39 @@ namespace FreelanceHub.Web.Controllers
 			return contract is null ? NotFound() : View(new ContractDetailsViewModel { Contract = contract });
 		}
 
-		// [HttpPost]
-		// [ValidateAntiForgeryToken]
-		// [Authorize(Roles = "Freelancer")]
-		// public async Task<IActionResult> Complete(int id)
-		// {
-		// 	if (!TryGetCurrentUserId(out var userId)) return Challenge();
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Freelancer")]
+		public async Task<IActionResult> Complete(int id)
+		{
+			if (!TryGetCurrentUserId(out var userId)) return Challenge();
 
-		// 	var result = await _contractService.CompleteAsync(id, userId);
-		// 	if (result.NotFound) return NotFound();
-		// 	if (!result.Succeeded)
-		// 	{
-		// 		TempData["ContractError"] = string.Join(" ", result.Errors.Select(error => error.Message));
-		// 	}
-		// 	else TempData["ContractSuccess"] = "The contract has been marked complete.";
-		// 	return RedirectToAction(nameof(Details), new { id });
-		// }
+			var result = await _contractService.CompleteAsync(id, userId);
+			if (result.NotFound) return NotFound();
+			if (!result.Succeeded)
+			{
+				TempData["ContractError"] = string.Join(" ", result.Errors.Select(error => error.Message));
+			}
+			else TempData["ContractSuccess"] = "The contract has been marked complete.";
+			return RedirectToAction(nameof(Details), new { id });
+		}
 
-		// [HttpPost]
-		// [ValidateAntiForgeryToken]
-		// [Authorize(Roles = "Freelancer,Client")]
-		// public async Task<IActionResult> Terminate(int id)
-		// {
-		// 	if (!TryGetCurrentUserId(out var userId)) return Challenge();
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Freelancer,Client")]
+		public async Task<IActionResult> Terminate(int id)
+		{
+			if (!TryGetCurrentUserId(out var userId)) return Challenge();
 
-		// 	var result = await _contractService.TerminateAsync(id, userId);
-		// 	if (result.NotFound) return NotFound();
-		// 	if (!result.Succeeded)
-		// 	{
-		// 		TempData["ContractError"] = string.Join(" ", result.Errors.Select(error => error.Message));
-		// 	}
-		// 	else TempData["ContractSuccess"] = "The contract has been terminated.";
-		// 	return RedirectToAction(nameof(Details), new { id });
-		// }
+			var result = await _contractService.TerminateAsync(id, userId);
+			if (result.NotFound) return NotFound();
+			if (!result.Succeeded)
+			{
+				TempData["ContractError"] = string.Join(" ", result.Errors.Select(error => error.Message));
+			}
+			else TempData["ContractSuccess"] = "The contract has been terminated.";
+			return RedirectToAction(nameof(Details), new { id });
+		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
