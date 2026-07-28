@@ -102,7 +102,7 @@ namespace FreelanceHub.Web
 				recurringJobManager.AddOrUpdate<IDailyBackgroundService>(
 					"DailyBackgroundService",
 					service => service.ExecuteDailyTasksAsync(),
-					Cron.Daily(1, 50),
+					Cron.Daily(0, 5),
 					TimeZoneInfo.Local);
 			}
 
