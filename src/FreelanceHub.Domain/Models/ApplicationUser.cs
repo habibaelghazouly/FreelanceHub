@@ -30,6 +30,8 @@ namespace FreelanceHub.Domain.Models
 
 		public ICollection<ChatMessage> SentChatMessages { get; set; } = new List<ChatMessage>();
 
+		public ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
+
 
 	}
 }
