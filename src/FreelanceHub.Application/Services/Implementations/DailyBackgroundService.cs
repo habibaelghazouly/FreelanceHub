@@ -22,10 +22,16 @@ namespace FreelanceHub.Application.Services.Implementations
 
         public async Task ExecuteDailyTasksAsync()
         {
+            
+            await UpdateJobStatusToOverdue();
+
+            await UpdateContractStatusToOverdue();
+        }
+
+        private async Task UpdateJobStatusToOverdue()
+        {
             // Get all jobs that have passed their deadline
             var expiredJobs = await _jobRepository.GetExpiredJobsAsync();
-            Console.WriteLine($"Found {expiredJobs.Count()} expired jobs to process.");
-
             foreach (var job in expiredJobs)
             {
                 // Update the status of the job to "Closed"
@@ -42,7 +48,10 @@ namespace FreelanceHub.Application.Services.Implementations
                     await _applicationRepository.UpdateApplicationAsync(application);
                 }
             }
+        }
 
+        private async Task UpdateContractStatusToOverdue()
+        {
             var expiredContracts = await _contractRepository.GetExpiredContractsAsync();
 
             foreach (var contract in expiredContracts)
@@ -52,8 +61,6 @@ namespace FreelanceHub.Application.Services.Implementations
                 await _contractRepository.UpdateContractAsync(contract);
             }
             await _applicationRepository.SaveChangesAsync();
-            
         }
-        
     }
 }
