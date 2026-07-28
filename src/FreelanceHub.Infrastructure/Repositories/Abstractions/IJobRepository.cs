@@ -19,4 +19,13 @@ public interface IJobRepository
     Task<IEnumerable<Job>> GetExpiredJobsAsync(CancellationToken cancellationToken = default);
 
     Task UpdateJobAsync(Job job, CancellationToken cancellationToken = default);
+
+    Task<(IReadOnlyList<Job> Jobs, int TotalCount)> BrowseJobsAsync(
+            int? categoryId,
+            int? skillId,
+            decimal? maxBudget,
+            string? sortOrder,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default);
 }

@@ -67,15 +67,70 @@ public class JobRepository(ApplicationDbContext dbContext) : IJobRepository
         .Include(job => job.Applications).ThenInclude(item => item.FreelancerUser);
 
     public async Task<IEnumerable<Job>> GetExpiredJobsAsync(CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Jobs
+            .Where(j => j.Deadline < DateTime.UtcNow && j.JobStatus == JobStatus.Open)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task UpdateJobAsync(Job job, CancellationToken cancellationToken = default)
+    {
+        dbContext.Jobs.Update(job);
+    }
+
+    public async Task<(IReadOnlyList<Job> Jobs, int TotalCount)> BrowseJobsAsync(
+int? categoryId,
+int? skillId,
+decimal? maxBudget,
+string? sortOrder,
+int pageNumber,
+int pageSize,
+CancellationToken cancellationToken = default)
+    {
+        IQueryable<Job> query = dbContext.Jobs
+            .Include(j => j.JobCategories)
+                .ThenInclude(jc => jc.Category)
+            .Include(j => j.JobSkills)
+                .ThenInclude(js => js.Skill)
+            .Include(j => j.JobTags)
+                .ThenInclude(jt => jt.Tag)
+            .Where(j => j.JobStatus == JobStatus.Open && !j.IsDeleted);
+
+        if (categoryId.HasValue)
         {
-            return await dbContext.Jobs
-                .Where(j => j.Deadline < DateTime.UtcNow && j.JobStatus == JobStatus.Open)
-                .ToListAsync(cancellationToken);
+            query = query.Where(j =>
+                j.JobCategories.Any(c => c.CategoryId == categoryId.Value));
         }
 
-        public async Task UpdateJobAsync(Job job, CancellationToken cancellationToken = default)
+        if (skillId.HasValue)
         {
-            dbContext.Jobs.Update(job);
+            query = query.Where(j =>
+                j.JobSkills.Any(s => s.SkillId == skillId.Value));
         }
+
+        if (maxBudget.HasValue)
+        {
+            query = query.Where(j => j.Budget <= maxBudget.Value);
+        }
+
+        query = sortOrder switch
+        {
+            "budget_asc" => query.OrderBy(j => j.Budget),
+            "budget_desc" => query.OrderByDescending(j => j.Budget),
+            "deadline" => query.OrderBy(j => j.Deadline),
+            _ => query.OrderByDescending(j => j.CreatedAt)
+        };
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var jobs = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (jobs, totalCount);
+    }
 
 }
+
+

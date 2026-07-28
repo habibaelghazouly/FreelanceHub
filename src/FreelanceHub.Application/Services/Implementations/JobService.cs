@@ -4,7 +4,6 @@ using FreelanceHub.Application.Services.Abstractions;
 using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
-using FreelanceHub.Infrastructure.Repositories.Abstractions;
 
 namespace FreelanceHub.Application.Services.Implementations
 {
@@ -52,7 +51,7 @@ namespace FreelanceHub.Application.Services.Implementations
                 // Save once to generate JobId
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                AssignJobAttributes(request, job);
+                await AssignJobAttributes(request, job, cancellationToken);
 
                 await UploadJobFiles(request, job, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -150,5 +149,51 @@ namespace FreelanceHub.Application.Services.Implementations
             if (!await _jobRepository.AreValidAttributesAsync(categoryIds, skillIds, tagIds, cancellationToken)) errors.Add("One or more selected categories, skills, or tags are invalid.");
             return errors;
         }
+        public async Task<CreateJobPageResult> GetCreateJobPageDataAsync(CancellationToken cancellationToken = default)
+        {
+            var categories = await _jobRepository.ListCategoriesAsync(cancellationToken);
+            var tags = await _jobRepository.ListTagsAsync(cancellationToken);
+            var skills = await _jobRepository.ListSkillsAsync(cancellationToken);
+
+            return new CreateJobPageResult
+            {
+                Categories = categories.Select(c => new SelectableItemResult
+                {
+                    Id = c.CategoryId,
+                    Name = c.Name
+                }).ToList(),
+
+                Tags = tags.Select(t => new SelectableItemResult
+                {
+                    Id = t.TagId,
+                    Name = t.Name
+                }).ToList(),
+
+                Skills = skills.Select(s => new SelectableItemResult
+                {
+                    Id = s.SkillId,
+                    Name = s.Name
+                }).ToList()
+            };
+        }
+
+        public async Task<BrowseJobsResult> BrowseJobsAsync(
+            int? categoryId,
+            int? skillId,
+            decimal? maxBudget,
+            string? sortOrder,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var (jobs, totalCount) = await _jobRepository.BrowseJobsAsync(categoryId, skillId, maxBudget, sortOrder, pageNumber, pageSize, cancellationToken);
+
+            return new BrowseJobsResult
+            {
+                Jobs = jobs,
+                TotalCount = totalCount
+            };
+        }
     }
+
 }
