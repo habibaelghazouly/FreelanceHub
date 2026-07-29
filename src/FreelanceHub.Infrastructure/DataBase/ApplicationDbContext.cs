@@ -38,6 +38,7 @@ namespace FreelanceHub.Infrastructure.DataBase
 
 		public DbSet<Application> Applications => Set<Application>();
 		public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+		public DbSet<Notification> Notifications => Set<Notification>();
 
 		public DbSet<Category> Categories => Set<Category>();
 
