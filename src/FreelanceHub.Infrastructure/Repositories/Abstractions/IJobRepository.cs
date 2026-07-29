@@ -15,4 +15,17 @@ public interface IJobRepository
     Task<IReadOnlyList<Job>> ListOpenAsync(CancellationToken cancellationToken = default);
     Task<Job?> GetByIdAsync(int jobId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Job> Jobs, int TotalCount)> BrowseOpenAsync(int? categoryId, decimal? maxBudget, int? skillId, string sortOrder, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<Job>> GetExpiredJobsAsync(CancellationToken cancellationToken = default);
+
+    Task UpdateJobAsync(Job job, CancellationToken cancellationToken = default);
+
+    Task<(IReadOnlyList<Job> Jobs, int TotalCount)> BrowseJobsAsync(
+            int? categoryId,
+            int? skillId,
+            decimal? maxBudget,
+            string? sortOrder,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default);
 }

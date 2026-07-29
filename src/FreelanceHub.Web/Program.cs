@@ -7,8 +7,10 @@ using FreelanceHub.Infrastructure.Repositories.Implementations;
 using FreelanceHub.Infrastructure.Storage;
 using FreelanceHub.Web.Hubs;
 using FreelanceHub.Web.Services;
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace FreelanceHub.Web
 {
@@ -58,7 +60,6 @@ namespace FreelanceHub.Web
 
 			builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
 			builder.Services.AddScoped<IFileUploadService, FileUploadService>();
-			builder.Services.AddScoped<IJobBrowseService, JobBrowseService>();
 			builder.Services.AddScoped<IProfileService, ProfileService>();
 			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 			builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
@@ -74,11 +75,36 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IChatService, ChatService>();
 			builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 			builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+			builder.Services.AddScoped<IJobRepository, JobRepository>();
+			builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
+			builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+			builder.Services.AddScoped<ILookupRepository, LookupRepository>();
+			builder.Services.AddScoped<IDailyBackgroundService, DailyBackgroundService>();
 
-            builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
-            builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+			builder.Services.AddHangfire(config =>
+			config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+		  	.UseSimpleAssemblyNameTypeSerializer()
+		  	.UseRecommendedSerializerSettings()
+		  	.UseSqlServerStorage(
+			  builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            var app = builder.Build();
+			builder.Services.AddHangfireServer();
+
+
+			var app = builder.Build();
+
+			app.UseHangfireDashboard();
+
+			using (var scope = app.Services.CreateScope())
+			{
+				var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+				recurringJobManager.AddOrUpdate<IDailyBackgroundService>(
+					"DailyBackgroundService",
+					service => service.ExecuteDailyTasksAsync(),
+					Cron.Daily(0, 5),
+					TimeZoneInfo.Local);
+			}
 
 			SeedAdminAsync(app.Services, builder.Configuration).GetAwaiter().GetResult();
 
@@ -102,7 +128,7 @@ namespace FreelanceHub.Web
 
 			app.MapControllerRoute(
 				name: "default",
-				pattern: "{controller=Home}/{action=Index}/{id?}");
+				pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
 			app.Run();
 		}

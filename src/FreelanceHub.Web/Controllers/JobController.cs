@@ -14,12 +14,10 @@ namespace FreelanceHub.Web.Controllers
     public class JobController : Controller
     {
         private readonly IJobService _jobService;
-        private readonly IJobRepository _jobRepository;
 
-        public JobController(IJobService jobService, IJobRepository jobRepository)
+        public JobController(IJobService jobService)
         {
             _jobService = jobService;
-            _jobRepository = jobRepository;
         }
 
         [HttpGet]
@@ -29,6 +27,7 @@ namespace FreelanceHub.Web.Controllers
             await PopulateCreateOptionsAsync();
             return View(new CreateJobViewModel());
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -81,7 +80,6 @@ namespace FreelanceHub.Web.Controllers
             }
             catch
             {
-                // Handle any exceptions that may occur while opening the streams
                 foreach (var stream in openedStreams)
                 {
                     stream.Dispose();
@@ -98,7 +96,7 @@ namespace FreelanceHub.Web.Controllers
                 CategoryIds = model.CategoryIds ?? string.Empty,
                 SkillIds = model.SkillIds ?? string.Empty,
                 TagIds = model.TagIds ?? string.Empty,
-                JobFiles = jobFiles
+                JobFiles = jobFiles ?? new List<UploadedFileRequest>()
             };
         }
 
@@ -112,12 +110,6 @@ namespace FreelanceHub.Web.Controllers
             return View(jobs);
         }
 
-        public async Task<IActionResult> Index()
-        {
-            var jobs = await _jobService.GetAllJOpeningJobsAsync();
-
-            return View(jobs);
-        }
 
         public async Task<IActionResult> DetailJob(int id)
         {
@@ -132,27 +124,43 @@ namespace FreelanceHub.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Freelancer")]
         public async Task<IActionResult> Browse(JobBrowseViewModel model)
         {
-            if (model.MaxBudget is < 0) ModelState.AddModelError(nameof(model.MaxBudget), "Maximum budget cannot be negative.");
-            if (model.PageNumber < 1) model.PageNumber = 1;
-            model.PageSize = Math.Clamp(model.PageSize, 1, 100);
-            if (model.SortOrder is not ("date" or "budget")) model.SortOrder = "date";
+            var result = await _jobService.BrowseJobsAsync(
+                model.CategoryId,
+                model.SkillId,
+                model.MaxBudget,
+                model.SortOrder,
+                model.PageNumber,
+                model.PageSize,
+                HttpContext.RequestAborted);
+            var data = await _jobService.GetCreateJobPageDataAsync();
+            return View(Mapper(result, model,data));
+        }
 
-            var result = await _jobRepository.BrowseOpenAsync(model.CategoryId, model.MaxBudget, model.SkillId, model.SortOrder, model.PageNumber, model.PageSize, HttpContext.RequestAborted);
-            model.TotalCount = result.TotalCount;
-            model.Jobs = result.Jobs;
-            model.Categories = (await _jobRepository.ListCategoriesAsync(HttpContext.RequestAborted)).Select(category => new SelectListItem(category.Name, category.CategoryId.ToString())).ToList();
-            model.Skills = (await _jobRepository.ListSkillsAsync(HttpContext.RequestAborted)).Select(skill => new SelectListItem(skill.Name, skill.SkillId.ToString())).ToList();
-            return View("~/Views/Jobs/Browse.cshtml", model);
+        private JobBrowseViewModel Mapper(BrowseJobsResult result, JobBrowseViewModel model,CreateJobPageResult data)
+        {
+            return new JobBrowseViewModel
+            {
+                SortOrder = model.SortOrder,
+                CategoryId = model.CategoryId,
+                SkillId = model.SkillId,
+                MaxBudget = model.MaxBudget,
+                PageNumber = model.PageNumber,
+                PageSize = model.PageSize,
+                TotalCount = result.TotalCount,
+                Jobs = result.Jobs,
+                Categories = data.Categories.Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToList(),
+                Skills = data.Skills.Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToList()
+            };
         }
 
         private async Task PopulateCreateOptionsAsync()
         {
-            ViewBag.Categories = (await _jobRepository.ListCategoriesAsync(HttpContext.RequestAborted)).Select(category => new SelectableItem { Id = category.CategoryId, Name = category.Name }).ToList();
-            ViewBag.Tags = (await _jobRepository.ListTagsAsync(HttpContext.RequestAborted)).Select(tag => new SelectableItem { Id = tag.TagId, Name = tag.Name }).ToList();
-            ViewBag.Skills = (await _jobRepository.ListSkillsAsync(HttpContext.RequestAborted)).Select(skill => new SelectableItem { Id = skill.SkillId, Name = skill.Name }).ToList();
+            var result = await _jobService.GetCreateJobPageDataAsync();
+            ViewBag.Categories = result.Categories;
+            ViewBag.Tags = result.Tags;
+            ViewBag.Skills = result.Skills;
         }
     }
 }

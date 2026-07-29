@@ -12,7 +12,7 @@ namespace FreelanceHub.Infrastructure.Configurations
             builder.ToTable("contracts", table =>
             {
                 table.HasCheckConstraint("chk_contracts_agreed_amount", "[agreed_amount] >= 0");
-                table.HasCheckConstraint("chk_contracts_status", "[contract_status] IN (60, 61, 62, 63, 64)");
+                table.HasCheckConstraint("chk_contracts_status", "[contract_status] IN (60, 61, 62, 63, 64,65)");
                 table.HasCheckConstraint("chk_contracts_expected_completion", "[expected_completion_date] IS NULL OR [expected_completion_date] >= [start_date]");
                 table.HasCheckConstraint("chk_contracts_actual_completion", "[actual_completion_date] IS NULL OR [actual_completion_date] >= [start_date]");
             });

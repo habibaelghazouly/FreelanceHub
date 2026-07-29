@@ -89,5 +89,17 @@ namespace FreelanceHub.Infrastructure.Repositories.Implementations
                 .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.ApplicationId == applicationId, cancellationToken);
         }
+
+        public async Task UpdateApplicationAsync(Application application, CancellationToken cancellationToken = default)
+        {
+            _dbContext.Applications.Update(application);
+        }
+
+        
+
+        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

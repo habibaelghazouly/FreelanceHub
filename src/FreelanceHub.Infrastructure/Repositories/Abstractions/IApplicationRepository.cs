@@ -20,5 +20,8 @@ namespace FreelanceHub.Infrastructure.Repositories.Abstractions
 
         Task<Application?> GetByIdWithDetailsAsync(int applicationId, CancellationToken cancellationToken = default);
 
+        Task UpdateApplicationAsync(Application application, CancellationToken cancellationToken = default);
+        Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
     }
 }
