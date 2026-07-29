@@ -361,7 +361,7 @@ namespace FreelanceHub.Web.Controllers
 		public async Task<IActionResult> Logout()
 		{
 			await _applicationUserService.LogoutAsync();
-			return RedirectToAction("Index", "Home");
+			return RedirectToAction("Index", "Dashboard");
 		}
 
 		[HttpGet]
@@ -378,7 +378,7 @@ namespace FreelanceHub.Web.Controllers
 				return LocalRedirect(returnUrl);
 			}
 
-			return RedirectToAction("Index", "Home");
+			return RedirectToAction("Index", "Dashboard");
 		}
 
 		private static TRequest PopulateAccountRequest<TRequest>(

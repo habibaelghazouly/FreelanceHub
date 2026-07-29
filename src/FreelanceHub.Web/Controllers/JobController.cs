@@ -124,6 +124,7 @@ namespace FreelanceHub.Web.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Browse(JobBrowseViewModel model)
         {
             var result = await _jobService.BrowseJobsAsync(
