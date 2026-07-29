@@ -13,15 +13,21 @@ namespace FreelanceHub.Application.Services.Implementations
 		private readonly IContractRepository _contractRepository;
 		private readonly IApplicationUserRepository _applicationUserRepository;
 		private readonly IUnitOfWork _unitOfWork;
+		private readonly INotificationService _notificationService;
+		private readonly INotificationPublisher _notificationPublisher;
 
 		public ContractService(
 			IContractRepository contractRepository,
 			IApplicationUserRepository applicationUserRepository,
-			IUnitOfWork unitOfWork)
+			IUnitOfWork unitOfWork,
+			INotificationService notificationService,
+			INotificationPublisher notificationPublisher)
 		{
 			_contractRepository = contractRepository;
 			_applicationUserRepository = applicationUserRepository;
 			_unitOfWork = unitOfWork;
+			_notificationService = notificationService;
+			_notificationPublisher = notificationPublisher;
 		}
 
 		public async Task<ContractDetailsResult?> GetDetailsAsync(int contractId, int currentUserId)
@@ -127,10 +133,21 @@ namespace FreelanceHub.Application.Services.Implementations
 				Rating = request.Rating,
 				Comment = comment
 			});
+			await _notificationService.CreateAsync(new CreateNotificationRequest
+			{
+				RecipientUserId = revieweeUserId,
+				ActorUserId = currentUserId,
+				NotificationType = NotificationType.ReviewReceived,
+				Title = "New review received",
+				Message = $"You received a {request.Rating}-star review for {contract.Job.Title}.",
+				TargetUrl = $"/profile/{revieweeUserId}#reviews",
+				RelatedEntityId = contractId
+			});
 
 			try
 			{
 				await _unitOfWork.SaveChangesAsync();
+				await _notificationPublisher.NotifyChangedAsync(revieweeUserId);
 				return UpdateOperationResult.Success();
 			}
 			catch (DbUpdateException)
@@ -230,8 +247,28 @@ namespace FreelanceHub.Application.Services.Implementations
 			contract.UpdatedAt = DateTime.UtcNow;
 			contract.Job.JobStatus = JobStatus.Completed;
 			contract.Job.UpdatedAt = DateTime.UtcNow;
-			await _unitOfWork.SaveChangesAsync();
-			return UpdateOperationResult.Success();
+
+			try
+			{
+				await _notificationService.CreateAsync(new CreateNotificationRequest
+				{
+					RecipientUserId = contract.Job.ClientUserId,
+					ActorUserId = freelancerUserId,
+					NotificationType = NotificationType.ContractStatusChanged,
+					Title = "Contract completed",
+					Message = $"The contract for {contract.Job.Title} was marked completed.",
+					TargetUrl = $"/Contract/Details/{contractId}",
+					RelatedEntityId = contractId
+				});
+				await _unitOfWork.SaveChangesAsync();
+				await _notificationPublisher.NotifyChangedAsync(contract.Job.ClientUserId);
+				return UpdateOperationResult.Success();
+			}
+			catch (DbUpdateException)
+			{
+				return UpdateOperationResult.Failed(
+					new UpdateOperationError(null, "Unable to complete this contract. Please try again."));
+			}
 		}
 
 		public async Task<UpdateOperationResult> TerminateAsync(int contractId, int userId)
@@ -252,8 +289,32 @@ namespace FreelanceHub.Application.Services.Implementations
 			contract.UpdatedAt = DateTime.UtcNow;
 			contract.Job.JobStatus = JobStatus.Cancelled;
 			contract.Job.UpdatedAt = DateTime.UtcNow;
-			await _unitOfWork.SaveChangesAsync();
-			return UpdateOperationResult.Success();
+
+			var clientUserId = contract.Job.ClientUserId;
+			var freelancerUserId = contract.AcceptedApplication.FreelancerUserId;
+			var recipientUserId = userId == clientUserId ? freelancerUserId : clientUserId;
+
+			try
+			{
+				await _notificationService.CreateAsync(new CreateNotificationRequest
+				{
+					RecipientUserId = recipientUserId,
+					ActorUserId = userId,
+					NotificationType = NotificationType.ContractStatusChanged,
+					Title = "Contract terminated",
+					Message = $"The contract for {contract.Job.Title} was terminated.",
+					TargetUrl = $"/Contract/Details/{contractId}",
+					RelatedEntityId = contractId
+				});
+				await _unitOfWork.SaveChangesAsync();
+				await _notificationPublisher.NotifyChangedAsync(recipientUserId);
+				return UpdateOperationResult.Success();
+			}
+			catch (DbUpdateException)
+			{
+				return UpdateOperationResult.Failed(
+					new UpdateOperationError(null, "Unable to terminate this contract. Please try again."));
+			}
 		}
 
 		public string GetContractStatusDisplayName(ContractStatus status)

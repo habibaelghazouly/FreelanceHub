@@ -1,5 +1,7 @@
+using FreelanceHub.Application.DTOs.Requests;
 using FreelanceHub.Application.DTOs.Results;
 using FreelanceHub.Application.Services.Abstractions;
+using FreelanceHub.Domain.Enums;
 using FreelanceHub.Domain.Models;
 using FreelanceHub.Infrastructure.Repositories.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +14,19 @@ namespace FreelanceHub.Application.Services.Implementations
 		private const int MaxMessageLength = 2000;
 		private readonly IChatMessageRepository _chatMessageRepository;
 		private readonly IUnitOfWork _unitOfWork;
+		private readonly INotificationService _notificationService;
+		private readonly INotificationPublisher _notificationPublisher;
 
-		public ChatService(IChatMessageRepository chatMessageRepository, IUnitOfWork unitOfWork)
+		public ChatService(
+			IChatMessageRepository chatMessageRepository,
+			IUnitOfWork unitOfWork,
+			INotificationService notificationService,
+			INotificationPublisher notificationPublisher)
 		{
 			_chatMessageRepository = chatMessageRepository;
 			_unitOfWork = unitOfWork;
+			_notificationService = notificationService;
+			_notificationPublisher = notificationPublisher;
 		}
 
 		public async Task<ChatInboxResult> GetInboxAsync(int currentUserId)
@@ -89,6 +99,9 @@ namespace FreelanceHub.Application.Services.Implementations
 			var sender = currentUserId == application.FreelancerUserId
 				? application.FreelancerUser
 				: application.Job.ClientUser;
+			var recipientUserId = currentUserId == application.FreelancerUserId
+				? application.Job.ClientUserId
+				: application.FreelancerUserId;
 			var message = new ChatMessage
 			{
 				ApplicationId = applicationId,
@@ -98,10 +111,21 @@ namespace FreelanceHub.Application.Services.Implementations
 			};
 
 			await _chatMessageRepository.AddAsync(message);
+			await _notificationService.CreateAsync(new CreateNotificationRequest
+			{
+				RecipientUserId = recipientUserId,
+				ActorUserId = currentUserId,
+				NotificationType = NotificationType.ChatMessage,
+				Title = $"New message from {GetDisplayName(sender)}",
+				Message = GetMessagePreview(normalizedContent),
+				TargetUrl = $"/messages/application/{applicationId}",
+				RelatedEntityId = applicationId
+			});
 
 			try
 			{
 				await _unitOfWork.SaveChangesAsync();
+				await _notificationPublisher.NotifyChangedAsync(recipientUserId);
 				return SendChatMessageResult.Success(new ChatMessageResult
 				{
 					ChatMessageId = message.ChatMessageId,
@@ -116,6 +140,11 @@ namespace FreelanceHub.Application.Services.Implementations
 			{
 				return SendChatMessageResult.Failed("Unable to send the message. Please try again.");
 			}
+		}
+
+		private static string GetMessagePreview(string content)
+		{
+			return content.Length <= 500 ? content : $"{content[..497]}...";
 		}
 
 		private static ChatMessageResult MapMessage(ChatMessage message)

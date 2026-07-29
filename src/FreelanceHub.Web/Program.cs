@@ -74,6 +74,9 @@ namespace FreelanceHub.Web
 			builder.Services.AddScoped<IContractRepository, ContractRepository>();
 			builder.Services.AddScoped<IChatService, ChatService>();
 			builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+			builder.Services.AddScoped<INotificationService, NotificationService>();
+			builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+			builder.Services.AddScoped<INotificationPublisher, SignalRNotificationPublisher>();
 			builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 			builder.Services.AddScoped<IJobRepository, JobRepository>();
 			builder.Services.AddScoped<IApplicationManagementService, ApplicationManagementService>();
@@ -125,6 +128,7 @@ namespace FreelanceHub.Web
 			app.UseAuthorization();
 
 			app.MapHub<ChatHub>("/hubs/chat");
+			app.MapHub<NotificationHub>("/hubs/notifications");
 
 			app.MapControllerRoute(
 				name: "default",

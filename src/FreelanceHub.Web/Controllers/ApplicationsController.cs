@@ -187,7 +187,7 @@ namespace FreelanceHub.Web.Controllers
         [HttpPost]
         [Authorize(Roles = "Client")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStatus(int applicationId, int jobId, ApplicationStatus applicationStatus)
+        public async Task<IActionResult> UpdateStatus(int applicationId, ApplicationStatus applicationStatus)
         {
             if (!TryGetCurrentUserId(out var clientUserId))
             {
@@ -210,7 +210,9 @@ namespace FreelanceHub.Web.Controllers
                 TempData["ErrorMessage"] = string.Join(" ", result.Errors);
             }
 
-            return RedirectToAction(nameof(SubmittedApplications), new { jobId = jobId });
+            return result.JobId.HasValue
+                ? RedirectToAction(nameof(SubmittedApplications), new { jobId = result.JobId.Value })
+                : RedirectToAction("MyJobs", "Job");
         }
 
         private bool TryGetCurrentUserId(out int userId)
