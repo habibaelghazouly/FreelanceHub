@@ -28,19 +28,25 @@ namespace FreelanceHub.Application.Services.Implementations
         private readonly IFileUploadService _fileUploadService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ApplicationDbContext _dbContext;
+        private readonly INotificationService _notificationService;
+        private readonly INotificationPublisher _notificationPublisher;
 
         public ApplicationManagementService(
             IApplicationRepository applicationRepository,
             IAttachmentRepository attachmentRepository,
             IFileUploadService fileUploadService,
             IUnitOfWork unitOfWork,
-            ApplicationDbContext dbContext)
+            ApplicationDbContext dbContext,
+            INotificationService notificationService,
+            INotificationPublisher notificationPublisher)
         {
             _applicationRepository = applicationRepository;
             _attachmentRepository = attachmentRepository;
             _fileUploadService = fileUploadService;
             _unitOfWork = unitOfWork;
             _dbContext = dbContext;
+            _notificationService = notificationService;
+            _notificationPublisher = notificationPublisher;
         }
 
         public async Task<ApplicationActionResult> SubmitApplicationAsync(SubmitApplicationRequest request, CancellationToken cancellationToken = default)
@@ -111,12 +117,20 @@ namespace FreelanceHub.Application.Services.Implementations
                     });
                 }
 
-                if (request.PortfolioFiles.Count > 0)
+                await _notificationService.CreateAsync(new CreateNotificationRequest
                 {
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                }
+                    RecipientUserId = job.ClientUserId,
+                    ActorUserId = request.FreelancerUserId,
+                    NotificationType = NotificationType.ApplicationSubmitted,
+                    Title = "New application",
+                    Message = $"A freelancer applied to {job.Title}.",
+                    TargetUrl = $"/Applications/SubmittedApplications?jobId={job.JobId}",
+                    RelatedEntityId = application.ApplicationId
+                });
 
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _notificationPublisher.NotifyChangedAsync(job.ClientUserId);
                 return ApplicationActionResult.Success();
             }
             catch (FileUploadException ex)
@@ -223,6 +237,12 @@ namespace FreelanceHub.Application.Services.Implementations
                 return ApplicationActionResult.Failed("The selected application was not found.");
             }
 
+            var job = application.Job;
+            if (job is null)
+            {
+                return ApplicationActionResult.Failed(application.JobId, "The job for this application was not found.");
+            }
+
             if (application.ApplicationStatus == request.ApplicationStatus)
             {
                 return ApplicationActionResult.Success(application.JobId);
@@ -230,7 +250,13 @@ namespace FreelanceHub.Application.Services.Implementations
 
             if (application.ApplicationStatus is ApplicationStatus.Accepted or ApplicationStatus.Rejected)
             {
-                return ApplicationActionResult.Failed("Finalized applications cannot be changed.");
+                return ApplicationActionResult.Failed(application.JobId, "Finalized applications cannot be changed.");
+            }
+
+            if (request.ApplicationStatus == ApplicationStatus.Accepted
+                && await _dbContext.Contracts.AnyAsync(contract => contract.JobId == application.JobId, cancellationToken))
+            {
+                return ApplicationActionResult.Failed(application.JobId, "A contract already exists for this job.");
             }
 
             // Update Application Status
@@ -244,11 +270,8 @@ namespace FreelanceHub.Application.Services.Implementations
                 {
 
                     // Close the Job
-                    if (application.Job != null)
-                    {
-                        application.Job.JobStatus = JobStatus.InProgress; 
-                        application.Job.UpdatedAt = DateTime.UtcNow;
-                    }
+                    job.JobStatus = JobStatus.InProgress;
+                    job.UpdatedAt = DateTime.UtcNow;
 
                     var contract = new Contract
                     {
@@ -263,21 +286,40 @@ namespace FreelanceHub.Application.Services.Implementations
                     };
 
                     await _dbContext.Contracts.AddAsync(contract, cancellationToken);
-					application.Job.JobStatus = JobStatus.InProgress;
-					application.Job.UpdatedAt = DateTime.UtcNow;
-                   
                 }
+
+                var accepted = request.ApplicationStatus == ApplicationStatus.Accepted;
+                await _notificationService.CreateAsync(new CreateNotificationRequest
+                {
+                    RecipientUserId = application.FreelancerUserId,
+                    ActorUserId = request.ClientUserId,
+                    NotificationType = NotificationType.ApplicationStatusChanged,
+                    Title = accepted ? "Application accepted" : "Application status updated",
+                    Message = accepted
+                        ? $"Your application for {job.Title} was accepted and a draft contract was created."
+                        : $"Your application for {job.Title} is now {GetApplicationStatusDisplayName(request.ApplicationStatus)}.",
+                    TargetUrl = accepted ? "/Contract" : "/Applications/MyApplications",
+                    RelatedEntityId = application.ApplicationId
+                });
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _notificationPublisher.NotifyChangedAsync(application.FreelancerUserId);
             }
             catch (DbUpdateException)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                return ApplicationActionResult.Failed("Unable to update application status and create contract right now. Please try again.");
+                return ApplicationActionResult.Failed(
+                    application.JobId,
+                    "Unable to update the application status right now. Please try again.");
             }
 
             return ApplicationActionResult.Success(application.JobId);
+        }
+
+        private static string GetApplicationStatusDisplayName(ApplicationStatus status)
+        {
+            return status == ApplicationStatus.UnderReview ? "under review" : status.ToString().ToLowerInvariant();
         }
 
         private static List<string> ValidateSubmitRequest(SubmitApplicationRequest request)

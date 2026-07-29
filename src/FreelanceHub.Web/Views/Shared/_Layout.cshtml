@@ -7,6 +7,7 @@
     <title>@ViewData["Title"] - FreelanceHub</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/FreelanceHub.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -72,6 +73,30 @@
                     <ul class="navbar-nav">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
+                            <li id="notification-root" class="nav-item dropdown notification-nav"
+                                data-summary-url="@Url.Action("Summary", "Notifications")"
+                                data-base-url="@Url.Action("Index", "Notifications")"
+                                data-hub-url="@Url.Content("~/hubs/notifications")"
+                                data-default-avatar-url="@Url.Content("~/img/default-avatar.svg")">
+                                <button type="button" class="nav-link notification-toggle" data-bs-toggle="dropdown"
+                                        aria-expanded="false" aria-label="Notifications">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+                                    </svg>
+                                    <span id="notification-badge" class="notification-badge" hidden></span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end notification-dropdown">
+                                    <div class="notification-dropdown-heading">
+                                        <strong>Notifications</strong>
+                                        <button type="button" data-mark-all-read>Mark all read</button>
+                                    </div>
+                                    <div id="notification-dropdown-list" class="notification-dropdown-list">
+                                        <span class="notification-loading">Loading...</span>
+                                    </div>
+                                    <a asp-controller="Notifications" asp-action="Index" class="notification-view-all">View all notifications</a>
+                                </div>
+                                <form id="notification-antiforgery" class="d-none">@Html.AntiForgeryToken()</form>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Profile" asp-action="Index">Profile</a>
                             </li>
@@ -112,6 +137,11 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@9.0.6/dist/browser/signalr.min.js"></script>
+        <script src="~/js/notifications.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

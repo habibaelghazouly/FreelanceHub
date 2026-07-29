@@ -151,7 +151,7 @@ namespace FreelanceHub.Application.Services.Implementations
 				RelatedEntityId = notification.RelatedEntityId,
 				ActorDisplayName = notification.ActorUser is null ? null : GetDisplayName(notification.ActorUser),
 				ActorProfileImageUrl = notification.ActorUser?.ProfileImageAttachment?.FileUrl,
-				CreatedAt = notification.CreatedAt,
+				CreatedAt = DateTime.SpecifyKind(notification.CreatedAt, DateTimeKind.Utc),
 				IsRead = notification.ReadAt.HasValue
 			};
 		}

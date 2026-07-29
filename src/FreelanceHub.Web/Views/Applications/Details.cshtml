@@ -172,7 +172,6 @@
                         <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
-                            <input type="hidden" name="jobId" value="@Model.JobId" />
                             <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Accepted" />
                             <button type="submit" class="btn btn-success w-100 rounded-3">
                                 <i class="bi bi-check-lg me-1"></i> Accept Proposal
@@ -182,7 +181,6 @@
                         <form asp-controller="Applications" asp-action="UpdateStatus" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
-                            <input type="hidden" name="jobId" value="@Model.JobId" />
                             <input type="hidden" name="applicationStatus" value="@ApplicationStatus.Rejected" />
                             <button type="submit" class="btn btn-outline-danger w-100 rounded-3">
                                 <i class="bi bi-x-lg me-1"></i> Reject Proposal
