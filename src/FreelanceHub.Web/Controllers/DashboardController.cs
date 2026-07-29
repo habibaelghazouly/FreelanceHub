@@ -18,14 +18,14 @@ public class DashboardController : Controller
         // Not logged in
         if (!User.Identity!.IsAuthenticated)
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Browse", "Job");
         }
 
         var user = await _userManager.GetUserAsync(User);
 
         if (user == null)
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Browse", "Job");
         }
 
         if (await _userManager.IsInRoleAsync(user, "Admin"))
@@ -45,6 +45,6 @@ public class DashboardController : Controller
             // or FreelancerDashboard
         }
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Browse", "Job");
     }
 }
