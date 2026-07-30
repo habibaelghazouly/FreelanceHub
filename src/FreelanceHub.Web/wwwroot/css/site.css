@@ -20,3 +20,53 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.app-navbar {
+  border-bottom: 1px solid #cbd5d0;
+  background: #f4f1e9;
+  box-shadow: 0 4px 14px rgba(24, 59, 50, 0.06);
+}
+
+.app-navbar .navbar-brand {
+  color: #183b32;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-navbar .navbar-brand:hover,
+.app-navbar .navbar-brand:focus {
+  color: #2f6556;
+}
+
+.app-navbar .navbar-nav .nav-link,
+.app-navbar .navbar-nav .btn-link.nav-link {
+  color: #344b43 !important;
+  font-weight: 650;
+}
+
+.app-navbar .navbar-nav a.nav-link:hover,
+.app-navbar .navbar-nav a.nav-link:focus,
+.app-navbar .navbar-nav .btn-link.nav-link:hover,
+.app-navbar .navbar-nav .btn-link.nav-link:focus {
+  color: #183b32 !important;
+  background: #e5e8df;
+}
+
+.app-navbar .navbar-toggler {
+  border-color: #9eada6;
+  border-radius: 0;
+}
+
+.app-navbar .notification-badge {
+  border-color: #f4f1e9;
+}
+
+@media (min-width: 576px) {
+  .app-navbar .navbar-nav .nav-link,
+  .app-navbar .navbar-nav .btn-link.nav-link {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
