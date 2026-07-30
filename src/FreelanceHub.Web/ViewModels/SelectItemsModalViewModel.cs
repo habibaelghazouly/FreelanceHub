@@ -33,8 +33,14 @@ namespace FreelanceHub.Web.ViewModels
     /// Represents a single selectable item (category, tag, or skill).
     /// </summary>
     public class SelectableItem
+    
     {
-        public int Id { get; set; }
+        public SelectableItem(string id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
+        public string Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 }

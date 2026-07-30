@@ -24,7 +24,7 @@ namespace FreelanceHub.Web.Controllers
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create()
         {
-            await PopulateCreateOptionsAsync();
+            await PopulateCreateOptionsAsync(true);
             return View(new CreateJobViewModel());
         }
 
@@ -37,7 +37,7 @@ namespace FreelanceHub.Web.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!ModelState.IsValid)
             {
-                await PopulateCreateOptionsAsync();
+                await PopulateCreateOptionsAsync(true);
                 return View(model);
             }
             if (!int.TryParse(userId, out var clientId))
@@ -58,7 +58,7 @@ namespace FreelanceHub.Web.Controllers
             if (!result.Succeeded)
             {
                 foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
-                await PopulateCreateOptionsAsync();
+                await PopulateCreateOptionsAsync(true);
                 return View(model);
             }
 
@@ -156,12 +156,21 @@ namespace FreelanceHub.Web.Controllers
             };
         }
 
-        private async Task PopulateCreateOptionsAsync()
+        private async Task PopulateCreateOptionsAsync(bool isCreate = false)
         {
             var result = await _jobService.GetCreateJobPageDataAsync();
-            ViewBag.Categories = result.Categories;
-            ViewBag.Tags = result.Tags;
-            ViewBag.Skills = result.Skills;
+            if (isCreate)
+            {
+                ViewBag.Categories = result.Categories.Select(c => new SelectableItem(c.Id.ToString(), c.Name)).ToList();
+                ViewBag.Tags = result.Tags.Select(t => new SelectableItem(t.Id.ToString(), t.Name)).ToList();
+                ViewBag.Skills = result.Skills.Select(s => new SelectableItem(s.Id.ToString(), s.Name)).ToList();
+            }
+            else
+            {
+                ViewBag.Categories = result.Categories;
+                ViewBag.Tags = result.Tags;
+                ViewBag.Skills = result.Skills;
+            }
         }
     }
 }
