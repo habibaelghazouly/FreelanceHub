@@ -1,9 +1,52 @@
 ﻿@{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Welcome";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Manage projects, proposals, and collaborations in one place.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/welcome.css" asp-append-version="true" />
+}
 
-</div>
+<section class="welcome-screen">
+    <div class="welcome-copy">
+        <span class="welcome-kicker">FreelanceHub</span>
+        <h1>Work smarter,<br /><em>together.</em></h1>
+        <p>Find the right projects, hire top talent, and manage conversations, contracts, and collaboration, all in one place.</p>
+
+        <div class="welcome-actions">
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Admin" asp-action="Index" class="welcome-primary">Open admin dashboard</a>
+            }
+            else if (User.IsInRole("Client"))
+            {
+                <a asp-controller="Job" asp-action="Create" class="welcome-primary">Post a job</a>
+                <a asp-controller="Job" asp-action="MyJobs" class="welcome-secondary">View my jobs</a>
+            }
+            else if (User.IsInRole("Freelancer"))
+            {
+                <a asp-controller="Job" asp-action="Browse" class="welcome-primary">Browse jobs</a>
+                <a asp-controller="Applications" asp-action="MyApplications" class="welcome-secondary">My applications</a>
+            }
+            else
+            {
+                <a asp-controller="Job" asp-action="Browse" class="welcome-primary">Explore jobs</a>
+                <a asp-controller="Account" asp-action="Register" class="welcome-secondary">Create an account</a>
+            }
+        </div>
+    </div>
+
+    <div class="welcome-details" aria-label="What you can do on FreelanceHub">
+        <div>
+            <span>01</span>
+            <p>Post or discover focused project opportunities.</p>
+        </div>
+        <div>
+            <span>02</span>
+            <p>Manage proposals, contracts, and reviews.</p>
+        </div>
+        <div>
+            <span>03</span>
+            <p>Stay connected with messages and notifications.</p>
+        </div>
+    </div>
+</section>

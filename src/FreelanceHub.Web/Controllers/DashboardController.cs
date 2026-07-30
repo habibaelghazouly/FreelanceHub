@@ -18,14 +18,14 @@ public class DashboardController : Controller
         // Not logged in
         if (!User.Identity!.IsAuthenticated)
         {
-            return RedirectToAction("Browse", "Job");
+            return RedirectToAction("Index", "Home");
         }
 
         var user = await _userManager.GetUserAsync(User);
 
         if (user == null)
         {
-            return RedirectToAction("Browse", "Job");
+            return RedirectToAction("Index", "Home");
         }
 
         if (await _userManager.IsInRoleAsync(user, "Admin"))
