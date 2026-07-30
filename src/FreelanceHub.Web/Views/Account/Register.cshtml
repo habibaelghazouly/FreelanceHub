@@ -3,37 +3,45 @@
     var returnUrl = ViewData["ReturnUrl"] as string;
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <div class="text-center mb-4">
-            <h1 class="h2">How will you use FreelanceHub?</h1>
-            <p class="text-muted">Choose the account that matches what you want to do.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+}
+
+<section class="auth-shell">
+    <div class="auth-intro">
+        <span class="auth-kicker">Join FreelanceHub</span>
+        <h1>Choose your<br /><em>way to work.</em></h1>
+        <p>Start with the account that matches what you want to accomplish.</p>
+    </div>
+
+    <div class="auth-panel auth-choice-panel">
+        <header class="auth-panel-heading">
+            <span>Account type</span>
+            <h2>How will you use FreelanceHub?</h2>
+        </header>
+
+        <div class="auth-choice-list">
+            <a asp-action="RegisterClient" asp-route-returnUrl="@returnUrl" class="auth-choice">
+                <span class="auth-choice-number">01</span>
+                <div>
+                    <h3>Hire professionals</h3>
+                    <p>Publish projects, review proposals, and work with freelancers.</p>
+                </div>
+                <span class="auth-choice-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+
+            <a asp-action="RegisterFreelancer" asp-route-returnUrl="@returnUrl" class="auth-choice">
+                <span class="auth-choice-number">02</span>
+                <div>
+                    <h3>Find freelance work</h3>
+                    <p>Showcase your expertise, discover projects, and submit proposals.</p>
+                </div>
+                <span class="auth-choice-arrow" aria-hidden="true">&rarr;</span>
+            </a>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="card h-100 shadow-sm border-0">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <h2 class="h4">Hire professionals</h2>
-                        <p class="text-muted flex-grow-1">Create a Client account to publish projects, review proposals, and work with freelancers.</p>
-                        <a asp-action="RegisterClient" asp-route-returnUrl="@returnUrl" class="btn btn-primary">Join as a client</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card h-100 shadow-sm border-0">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <h2 class="h4">Find freelance work</h2>
-                        <p class="text-muted flex-grow-1">Create a Freelancer account to showcase your expertise and submit proposals.</p>
-                        <a asp-action="RegisterFreelancer" asp-route-returnUrl="@returnUrl" class="btn btn-primary">Join as a freelancer</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <p class="mt-4 mb-0 text-center">
+        <p class="auth-panel-footer">
             Already registered? <a asp-action="Login" asp-route-returnUrl="@returnUrl">Login</a>
         </p>
     </div>
-</div>
+</section>
