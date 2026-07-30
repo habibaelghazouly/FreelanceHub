@@ -53,7 +53,12 @@ public class JobRepository(ApplicationDbContext dbContext) : IJobRepository
         if (skillId.HasValue) query = query.Where(job => job.JobSkills.Any(item => item.SkillId == skillId.Value));
 
         var totalCount = await query.CountAsync(cancellationToken);
-        query = sortOrder == "budget" ? query.OrderByDescending(job => job.Budget) : query.OrderByDescending(job => job.CreatedAt);
+        query = sortOrder?.Trim().ToLowerInvariant() switch
+        {
+            "budget" or "budget_desc" => query.OrderByDescending(job => job.Budget),
+            "budget_asc" => query.OrderBy(job => job.Budget),
+            _ => query.OrderByDescending(job => job.CreatedAt)
+        };
         var jobs = await query.Skip((Math.Max(pageNumber, 1) - 1) * Math.Clamp(pageSize, 1, 100)).Take(Math.Clamp(pageSize, 1, 100)).ToListAsync(cancellationToken);
         return (jobs, totalCount);
     }
@@ -79,13 +84,13 @@ public class JobRepository(ApplicationDbContext dbContext) : IJobRepository
     }
 
     public async Task<(IReadOnlyList<Job> Jobs, int TotalCount)> BrowseJobsAsync(
-int? categoryId,
-int? skillId,
-decimal? maxBudget,
-string? sortOrder,
-int pageNumber,
-int pageSize,
-CancellationToken cancellationToken = default)
+        int? categoryId,
+        int? skillId,
+        decimal? maxBudget,
+        string? sortOrder,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<Job> query = dbContext.Jobs
             .Include(j => j.JobCategories)
@@ -113,10 +118,12 @@ CancellationToken cancellationToken = default)
             query = query.Where(j => j.Budget <= maxBudget.Value);
         }
 
-        query = sortOrder switch
+        // Normalize so "budget", "Budget", "budget_desc", etc. all resolve consistently,
+        // and align this with BrowseOpenAsync's accepted values.
+        query = sortOrder?.Trim().ToLowerInvariant() switch
         {
+            "budget" or "budget_desc" => query.OrderByDescending(j => j.Budget),
             "budget_asc" => query.OrderBy(j => j.Budget),
-            "budget_desc" => query.OrderByDescending(j => j.Budget),
             "deadline" => query.OrderBy(j => j.Deadline),
             _ => query.OrderByDescending(j => j.CreatedAt)
         };
@@ -124,13 +131,10 @@ CancellationToken cancellationToken = default)
         var totalCount = await query.CountAsync(cancellationToken);
 
         var jobs = await query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((Math.Max(pageNumber, 1) - 1) * Math.Clamp(pageSize, 1, 100))
+            .Take(Math.Clamp(pageSize, 1, 100))
             .ToListAsync(cancellationToken);
 
         return (jobs, totalCount);
     }
-
 }
-
-
